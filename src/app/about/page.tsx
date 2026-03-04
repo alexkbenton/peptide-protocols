@@ -1,5 +1,11 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import SiteLayout from '@/components/SiteLayout'
+
+export const metadata: Metadata = {
+  title: 'About',
+  description: 'Learn about the mission behind Peptide Protocols — making evidence-based peptide education accessible to everyone.',
+}
 
 export default function AboutPage() {
   return (

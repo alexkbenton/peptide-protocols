@@ -1,5 +1,11 @@
+import type { Metadata } from 'next'
 import SiteLayout from '@/components/SiteLayout'
 import { getAllVideos } from '@/data/videos'
+
+export const metadata: Metadata = {
+  title: 'Videos',
+  description: 'In-depth video content breaking down the science behind peptide protocols. Watch and learn at your own pace.',
+}
 
 export default function VideosPage() {
   const videos = getAllVideos()

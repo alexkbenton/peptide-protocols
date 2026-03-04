@@ -1,0 +1,10 @@
+# Peptide Protocols robots.txt
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://peptideprotocols.us/sitemap.xml
+
+# Block gate page from indexing
+Disallow: /gate
+Disallow: /api/

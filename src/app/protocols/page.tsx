@@ -1,6 +1,12 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import SiteLayout from '@/components/SiteLayout'
 import { getAllProtocols } from '@/data/protocols'
+
+export const metadata: Metadata = {
+  title: 'Protocols',
+  description: 'Browse our collection of research-backed peptide protocols. Each one is structured for clarity and easy reference.',
+}
 
 export default function ProtocolsPage() {
   const protocols = getAllProtocols()

@@ -3,13 +3,13 @@ import Link from 'next/link'
 export default function Footer() {
   return (
     <footer className="border-t border-warm-200 bg-white">
-      <div className="container-wide py-16">
-        <div className="grid gap-12 md:grid-cols-3">
+      <div className="container-wide py-12 sm:py-16">
+        <div className="grid gap-10 sm:gap-12 md:grid-cols-3">
           {/* Brand */}
           <div>
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-sage-600">
-                <span className="text-base font-bold text-white">P</span>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sage-600 sm:h-9 sm:w-9">
+                <span className="text-sm font-bold text-white sm:text-base">P</span>
               </div>
               <span className="font-display text-lg font-medium text-warm-900">
                 Peptide Protocols
@@ -29,6 +29,9 @@ export default function Footer() {
               <Link href="/home" className="text-sm text-warm-800/70 transition-colors hover:text-sage-600">Home</Link>
               <Link href="/protocols" className="text-sm text-warm-800/70 transition-colors hover:text-sage-600">Protocols</Link>
               <Link href="/videos" className="text-sm text-warm-800/70 transition-colors hover:text-sage-600">Videos</Link>
+              <Link href="/shop" className="text-sm text-warm-800/70 transition-colors hover:text-sage-600">
+                Shop <span className="text-[10px] text-sage-500">(Coming Soon)</span>
+              </Link>
               <Link href="/about" className="text-sm text-warm-800/70 transition-colors hover:text-sage-600">About</Link>
             </div>
           </div>
@@ -48,7 +51,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 border-t border-warm-200 pt-8">
+        <div className="mt-10 border-t border-warm-200 pt-8 sm:mt-12">
           <p className="text-center text-xs text-warm-800/40">
             &copy; {new Date().getFullYear()} Peptide Protocols. All rights reserved.
           </p>

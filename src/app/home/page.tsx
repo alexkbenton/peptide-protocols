@@ -1,12 +1,18 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import SiteLayout from '@/components/SiteLayout'
+
+export const metadata: Metadata = {
+  title: 'Home',
+  description: 'Explore evidence-based peptide protocols, educational videos, and the science behind modern wellness. Your trusted source for peptide education.',
+}
 
 export default function HomePage() {
   return (
     <SiteLayout>
       {/* Hero */}
       <section className="relative overflow-hidden bg-warm-50 pb-24 pt-20">
-        <div className="container-narrow text-center">
+        <div className="container-narrow text-center animate-fade-in-up">
           <p className="mb-4 text-xs font-semibold tracking-[0.2em] text-sage-600 uppercase">
             Evidence-Based Wellness
           </p>
