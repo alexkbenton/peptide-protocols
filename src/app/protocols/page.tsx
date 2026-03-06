@@ -51,6 +51,20 @@ export default function ProtocolsPage() {
                   <p className="mt-3 text-sm leading-relaxed text-warm-800/60">
                     {protocol.summary}
                   </p>
+                  {protocol.compounds && (
+                    <div className="mt-4 flex flex-wrap gap-1.5">
+                      {protocol.compounds.slice(0, 4).map((c) => (
+                        <span key={c} className="rounded bg-warm-100 px-2 py-0.5 text-[10px] font-medium text-warm-800/60">
+                          {c}
+                        </span>
+                      ))}
+                      {protocol.compounds.length > 4 && (
+                        <span className="rounded bg-warm-100 px-2 py-0.5 text-[10px] font-medium text-warm-800/40">
+                          +{protocol.compounds.length - 4} more
+                        </span>
+                      )}
+                    </div>
+                  )}
                   <span className="mt-5 inline-flex items-center gap-1 text-sm font-medium text-sage-600">
                     Read protocol
                     <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
