@@ -5,6 +5,7 @@ export interface Video {
   wistiaId: string // Wistia video hash ID (from your Wistia media URL)
   category: VideoCategory
   duration?: string // e.g. "12:34"
+  startTime?: number // seconds — frame shown as thumbnail before playback
 }
 
 export type VideoCategory =
@@ -44,6 +45,7 @@ export const videos: Video[] = [
     description: 'A beginner-friendly introduction to peptides — what they are, how they work, and why they matter for your health.',
     wistiaId: 'gxdkvzle46',
     category: 'Peptide Basics',
+    startTime: 3,
   },
 
   // ── Gut Health & Recovery ───────────────────

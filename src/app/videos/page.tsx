@@ -90,14 +90,14 @@ export default function VideosPage() {
 
                 {hasVideos ? (
                   /* Video Grid */
-                  <div className="grid gap-8 md:grid-cols-2">
+                  <div className="grid gap-8 md:grid-cols-2 max-w-4xl">
                     {catVideos.map((video) => (
                       <div
                         key={video.id}
-                        className="overflow-hidden rounded-2xl border border-warm-200 bg-white shadow-sm"
+                        className="overflow-hidden rounded-2xl border border-warm-200 bg-white shadow-sm max-w-md"
                       >
                         <div className="bg-warm-100">
-                          <WistiaPlayer wistiaId={video.wistiaId} />
+                          <WistiaPlayer wistiaId={video.wistiaId} startTime={video.startTime} />
                         </div>
                         <div className="p-5">
                           <div className="flex items-center justify-between">

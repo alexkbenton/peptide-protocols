@@ -5,11 +5,13 @@ import { useEffect } from 'react'
 interface WistiaPlayerProps {
   wistiaId: string
   playerColor?: string
+  startTime?: number // seconds — the frame shown before playback
 }
 
 export default function WistiaPlayer({
   wistiaId,
   playerColor = '6b7f5e',
+  startTime,
 }: WistiaPlayerProps) {
   useEffect(() => {
     // Load Wistia E-V1 script once
@@ -47,7 +49,7 @@ export default function WistiaPlayer({
         }}
       >
         <div
-          className={`wistia_embed wistia_async_${wistiaId} fitStrategy=contain playerColor=${playerColor} videoFoam=true`}
+          className={`wistia_embed wistia_async_${wistiaId} fitStrategy=contain playerColor=${playerColor} videoFoam=true${startTime !== undefined ? ` time=${startTime}` : ''}`}
           style={{ height: '100%', position: 'relative', width: '100%' }}
         >
           &nbsp;
