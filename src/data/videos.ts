@@ -38,14 +38,13 @@ export const categoryOrder: VideoCategory[] = [
 
 export const videos: Video[] = [
   // ── Peptide Basics ──────────────────────────
-  // {
-  //   id: 'basics-1',
-  //   title: 'Introduction to Peptide Science',
-  //   description: 'What peptides are, how they signal in the body, and why they matter.',
-  //   wistiaId: 'abc123xyz',
-  //   category: 'Peptide Basics',
-  //   duration: '10:00',
-  // },
+  {
+    id: 'basics-1',
+    title: 'Peptides: Approachable Basics',
+    description: 'A beginner-friendly introduction to peptides — what they are, how they work, and why they matter for your health.',
+    wistiaId: 'gxdkvzle46',
+    category: 'Peptide Basics',
+  },
 
   // ── Gut Health & Recovery ───────────────────
   // {
