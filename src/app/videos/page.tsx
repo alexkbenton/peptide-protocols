@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import SiteLayout from '@/components/SiteLayout'
+import WistiaPlayer from '@/components/WistiaPlayer'
 import {
   categoryOrder,
   categoryDescriptions,
@@ -89,19 +90,14 @@ export default function VideosPage() {
 
                 {hasVideos ? (
                   /* Video Grid */
-                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid gap-8 md:grid-cols-2">
                     {catVideos.map((video) => (
                       <div
                         key={video.id}
-                        className="group overflow-hidden rounded-2xl border border-warm-200 bg-white shadow-sm transition-shadow hover:shadow-md"
+                        className="overflow-hidden rounded-2xl border border-warm-200 bg-white shadow-sm"
                       >
-                        <div className="relative aspect-video bg-warm-100">
-                          <iframe
-                            src={`https://fast.wistia.net/embed/iframe/${video.wistiaId}?videoFoam=true&playerColor=6b7f5e`}
-                            className="absolute inset-0 h-full w-full"
-                            allow="autoplay; fullscreen"
-                            allowFullScreen
-                          />
+                        <div className="bg-warm-100">
+                          <WistiaPlayer wistiaId={video.wistiaId} />
                         </div>
                         <div className="p-5">
                           <div className="flex items-center justify-between">
