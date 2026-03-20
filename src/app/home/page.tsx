@@ -35,7 +35,7 @@ export default function HomePage() {
         </div>
 
         {/* Decorative gradient */}
-        <div className="absolute -bottom-40 left-1/2 h-80 w-[800px] -translate-x-1/2 rounded-full bg-sage-100/50 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-40 left-1/2 h-80 w-[800px] -translate-x-1/2 rounded-full bg-sage-100/50 blur-3xl" />
       </section>
 
       {/* What You'll Find */}
