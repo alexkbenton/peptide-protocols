@@ -22,6 +22,13 @@ export const protocols: Protocol[] = [
     compounds: ['Retatrutide', 'CJC-1295/Ipamorelin', 'GLOW Blend', 'SS-31', 'MOTS-C', '5-Amino-1MQ', 'SLU-PP-332', 'NAD+', 'L-Carnitine', 'Creatine', 'Tadalafil'],
   },
   {
+    slug: 'growth-hormone-release',
+    title: 'Maximizing Growth Hormone Release Protocol',
+    category: 'Body Composition',
+    summary: 'A 12-week cycle combining GH-releasing peptides with targeted supplements to optimize natural growth hormone production, fat metabolism, and recovery.',
+    compounds: ['CJC-1295 no DAC', 'Ipamorelin', 'Tesamorelin', 'Glutamine', 'Zinc', 'Vitamin D3/K2', 'Arginine'],
+  },
+  {
     slug: 'cellular-repair',
     title: 'Cellular Repair Protocol',
     category: 'Longevity',

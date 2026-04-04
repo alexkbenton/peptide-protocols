@@ -7,11 +7,13 @@ import { getProtocolBySlug, getAllProtocols } from '@/data/protocols'
 import GutHealthContent from './content/gut-health-anti-inflammation'
 import OptimalFatMuscleContent from './content/optimal-fat-muscle-mito'
 import CellularRepairContent from './content/cellular-repair'
+import GrowthHormoneReleaseContent from './content/growth-hormone-release'
 
 const contentMap: Record<string, React.ComponentType> = {
   'gut-health-anti-inflammation': GutHealthContent,
   'optimal-fat-muscle-mito': OptimalFatMuscleContent,
   'cellular-repair': CellularRepairContent,
+  'growth-hormone-release': GrowthHormoneReleaseContent,
 }
 
 export function generateStaticParams() {
