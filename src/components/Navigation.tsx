@@ -4,9 +4,17 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 
-const links = [
+interface NavLink {
+  href: string
+  label: string
+  comingSoon?: boolean
+  isNew?: boolean
+}
+
+const links: NavLink[] = [
   { href: '/home', label: 'Home' },
   { href: '/protocols', label: 'Protocols' },
+  { href: '/personalize', label: 'My Protocol', isNew: true },
   { href: '/videos', label: 'Videos' },
   { href: '/shop', label: 'Shop', comingSoon: true },
   { href: '/about', label: 'About' },
@@ -49,6 +57,11 @@ export default function Navigation() {
                   }`}
                 >
                   {link.label}
+                  {link.isNew && (
+                    <span className="absolute -top-2 -right-4 rounded-full bg-sage-600 px-1.5 py-0.5 text-[9px] font-semibold text-white uppercase leading-none">
+                      New
+                    </span>
+                  )}
                 </Link>
               )}
             </div>
@@ -84,13 +97,18 @@ export default function Navigation() {
                   <Link
                     href={link.href}
                     onClick={() => setMobileOpen(false)}
-                    className={`text-sm font-medium tracking-wide uppercase ${
+                    className={`flex items-center gap-2 text-sm font-medium tracking-wide uppercase ${
                       pathname === link.href
                         ? 'text-sage-600'
                         : 'text-warm-800/60'
                     }`}
                   >
                     {link.label}
+                    {link.isNew && (
+                      <span className="rounded-full bg-sage-600 px-1.5 py-0.5 text-[9px] font-semibold text-white uppercase leading-none">
+                        New
+                      </span>
+                    )}
                   </Link>
                 )}
               </div>
