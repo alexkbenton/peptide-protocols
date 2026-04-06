@@ -1,39 +1,40 @@
 'use client'
 
 import { useState, useReducer, ReactNode } from 'react'
-import { ChevronLeft, ChevronRight, Download, Mail, RotateCcw } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Download, Mail, RotateCcw, Sparkles, Beaker, FlaskConical, Microscope, AlertCircle, CheckCircle } from 'lucide-react'
 
 // Types
 interface FormData {
-  // Step 1: Goals
+  // Step 2: Goals
   goals: string[]
+  topPriorities: string[]
 
-  // Step 2: Basic Profile
+  // Step 4: Experience & Preferences
+  peptideExperience: '' | 'never' | 'some' | 'experienced' | 'advanced'
+  preferredRoutes: string[]
+  timeCommitment: '' | 'minimal' | 'moderate' | 'comprehensive'
+  previousPeptides: string
+
+  // Step 5: Lifestyle
+  sleepQuality: '' | 'poor' | 'fair' | 'good' | 'excellent'
+  stressLevel: '' | 'low' | 'moderate' | 'high' | 'very-high'
+  dietType: '' | 'standard' | 'keto' | 'carnivore' | 'plant-based' | 'mediterranean' | 'intermittent-fasting' | 'other'
+
+  // Step 6: Basic Profile
   age?: number
   biologicalSex?: string
   weight?: number
-  weightUnit?: 'lbs' | 'kg'
+  weightUnit: 'lbs' | 'kg'
   activityLevel?: string
   conditions?: string
 
-  // Step 3: Advanced Data
-  bloodwork?: {
-    fastingInsulin?: number
-    igf1?: number
-    crp?: number
-    testosterone?: number
-    estradiol?: number
-    freeT3?: number
-    tsh?: number
-    fastingGlucose?: number
-    hba1c?: number
-    vitaminD?: number
-  }
+  // Step 7: Advanced Health Data
+  bloodwork: Record<string, number | undefined>
   supplements?: string
   geneticVariants?: string
   healthHistory?: string
 
-  // Step 4: Email + Generate
+  // Step 8: Email
   email?: string
 }
 
@@ -51,13 +52,14 @@ interface ProtocolResult {
   disclaimer: string
 }
 
-type WizardStep = 'disclaimer' | 'goals' | 'profile' | 'advanced' | 'email' | 'loading' | 'results'
+type WizardStep = 'disclaimer' | 'goals' | 'priority' | 'experience' | 'lifestyle' | 'profile' | 'advanced' | 'review' | 'loading' | 'results'
 
 interface WizardState {
   currentStep: WizardStep
   formData: FormData
   protocol?: ProtocolResult
   error?: string
+  disclaimerAccepted: boolean
 }
 
 type WizardAction =
@@ -65,15 +67,25 @@ type WizardAction =
   | { type: 'UPDATE_FORM'; payload: Partial<FormData> }
   | { type: 'SET_PROTOCOL'; payload: ProtocolResult }
   | { type: 'SET_ERROR'; payload: string }
+  | { type: 'SET_DISCLAIMER_ACCEPTED'; payload: boolean }
   | { type: 'RESET' }
 
 const initialState: WizardState = {
   currentStep: 'disclaimer',
   formData: {
     goals: [],
+    topPriorities: [],
+    peptideExperience: '',
+    preferredRoutes: [],
+    timeCommitment: '',
+    previousPeptides: '',
+    sleepQuality: '',
+    stressLevel: '',
+    dietType: '',
     weightUnit: 'lbs',
     bloodwork: {},
   },
+  disclaimerAccepted: false,
 }
 
 function wizardReducer(state: WizardState, action: WizardAction): WizardState {
@@ -89,6 +101,8 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       return { ...state, protocol: action.payload }
     case 'SET_ERROR':
       return { ...state, error: action.payload }
+    case 'SET_DISCLAIMER_ACCEPTED':
+      return { ...state, disclaimerAccepted: action.payload }
     case 'RESET':
       return initialState
     default:
@@ -111,1061 +125,1028 @@ const GOAL_OPTIONS = [
   'Immune Support',
 ]
 
-const ACTIVITY_LEVELS = [
-  'Sedentary',
-  'Lightly Active',
-  'Moderately Active',
-  'Very Active',
-  'Athlete',
+const BLOODWORK_MARKERS = [
+  { key: 'fastingInsulin', label: 'Fasting Insulin', unit: 'μIU/mL', placeholder: '3.2' },
+  { key: 'igf1', label: 'IGF-1', unit: 'ng/mL', placeholder: '220' },
+  { key: 'crp', label: 'CRP/hs-CRP', unit: 'mg/L', placeholder: '0.8' },
+  { key: 'testosteroneTotal', label: 'Testosterone Total', unit: 'ng/dL', placeholder: '650' },
+  { key: 'freeTestosterone', label: 'Free Testosterone', unit: 'pg/mL', placeholder: '15.5' },
+  { key: 'estradiol', label: 'Estradiol', unit: 'pg/mL', placeholder: '25' },
+  { key: 'shbg', label: 'SHBG', unit: 'nmol/L', placeholder: '40' },
+  { key: 'dheas', label: 'DHEA-S', unit: 'μg/dL', placeholder: '300' },
+  { key: 'freeT3', label: 'Free T3', unit: 'pg/mL', placeholder: '3.4' },
+  { key: 'freeT4', label: 'Free T4', unit: 'ng/dL', placeholder: '1.2' },
+  { key: 'tsh', label: 'TSH', unit: 'mIU/L', placeholder: '1.5' },
+  { key: 'fastingGlucose', label: 'Fasting Glucose', unit: 'mg/dL', placeholder: '92' },
+  { key: 'hba1c', label: 'HbA1c', unit: '%', placeholder: '5.1' },
+  { key: 'vitaminD', label: 'Vitamin D', unit: 'ng/mL', placeholder: '55' },
+  { key: 'ferritin', label: 'Ferritin', unit: 'ng/mL', placeholder: '80' },
+  { key: 'homocysteine', label: 'Homocysteine', unit: 'μmol/L', placeholder: '8' },
+  { key: 'alt', label: 'ALT', unit: 'U/L', placeholder: '22' },
+  { key: 'ast', label: 'AST', unit: 'U/L', placeholder: '20' },
+  { key: 'gfr', label: 'GFR', unit: 'mL/min', placeholder: '90' },
+  { key: 'totalCholesterol', label: 'Total Cholesterol', unit: 'mg/dL', placeholder: '190' },
+  { key: 'ldl', label: 'LDL', unit: 'mg/dL', placeholder: '110' },
+  { key: 'hdl', label: 'HDL', unit: 'mg/dL', placeholder: '55' },
+  { key: 'triglycerides', label: 'Triglycerides', unit: 'mg/dL', placeholder: '100' },
+  { key: 'cortisolAM', label: 'Cortisol AM', unit: 'μg/dL', placeholder: '15' },
+  { key: 'progesterone', label: 'Progesterone', unit: 'ng/mL', placeholder: '1.0' },
+  { key: 'prolactin', label: 'Prolactin', unit: 'ng/mL', placeholder: '10' },
 ]
 
-// Step Components
-function DisclaimerStep({
-  onNext,
-}: {
-  onNext: () => void
-}): ReactNode {
-  const [agreed, setAgreed] = useState(false)
-
-  return (
-    <div className="animate-fade-in-up space-y-6">
-      <div>
-        <h2 className="heading-section mb-4">Important Disclaimer</h2>
-        <div className="space-y-4 text-body">
-          <p>
-            Welcome to the Peptide Protocols Personalization Wizard. Before we
-            begin, please read the following important information:
-          </p>
-
-          <div className="rounded-lg bg-sand-50 p-4 border border-sand-200">
-            <h3 className="font-semibold text-warm-900 mb-2">
-              Educational Purposes Only
-            </h3>
-            <p className="text-sm text-warm-800">
-              The protocols generated by this tool are educational in nature and
-              are not medical advice, diagnoses, or treatment recommendations.
-              This tool does not establish a doctor-patient relationship.
-            </p>
-          </div>
-
-          <div className="rounded-lg bg-sand-50 p-4 border border-sand-200">
-            <h3 className="font-semibold text-warm-900 mb-2">
-              Consult Healthcare Providers
-            </h3>
-            <p className="text-sm text-warm-800">
-              Before starting any new protocol or making changes to your current
-              health regimen, you must consult with a qualified healthcare
-              provider. Results are highly individual and depend on many
-              factors.
-            </p>
-          </div>
-
-          <div className="rounded-lg bg-sand-50 p-4 border border-sand-200">
-            <h3 className="font-semibold text-warm-900 mb-2">
-              Not a Substitute for Professional Medical Advice
-            </h3>
-            <p className="text-sm text-warm-800">
-              This tool is educational and should not replace professional
-              medical advice, examination, diagnosis, or treatment by a
-              qualified healthcare provider.
-            </p>
-          </div>
-
-          <div className="rounded-lg bg-sand-50 p-4 border border-sand-200">
-            <h3 className="font-semibold text-warm-900 mb-2">
-              Data Privacy
-            </h3>
-            <p className="text-sm text-warm-800">
-              Your health information is processed in real-time and never
-              permanently stored. We do not share your data with third parties.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-start gap-3">
-        <input
-          type="checkbox"
-          id="agree"
-          checked={agreed}
-          onChange={(e) => setAgreed(e.target.checked)}
-          className="mt-1 h-5 w-5 rounded border-warm-300 text-sage-600 cursor-pointer accent-sage-600"
-        />
-        <label htmlFor="agree" className="text-sm text-warm-800 cursor-pointer">
-          I understand that this is educational content, not medical advice, and
-          I will consult with a healthcare provider before implementing any
-          protocol.
-        </label>
-      </div>
-
-      <button
-        onClick={onNext}
-        disabled={!agreed}
-        className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
-      >
-        I Agree & Continue
-      </button>
-    </div>
-  )
+const GOAL_MARKER_MAP: Record<string, string[]> = {
+  'Fat Loss': ['fastingInsulin', 'fastingGlucose', 'hba1c', 'triglycerides', 'freeT3', 'tsh', 'cortisolAM', 'dheas'],
+  'Muscle Growth': ['testosteroneTotal', 'freeTestosterone', 'igf1', 'shbg', 'dheas', 'estradiol'],
+  'Gut Health': ['crp', 'homocysteine', 'ferritin', 'vitaminD', 'alt', 'ast'],
+  'Anti-Inflammation': ['crp', 'homocysteine', 'ferritin', 'vitaminD', 'cortisolAM', 'fastingInsulin'],
+  'Longevity/Anti-Aging': ['fastingInsulin', 'hba1c', 'crp', 'homocysteine', 'vitaminD', 'igf1', 'gfr', 'hdl', 'triglycerides'],
+  'Cognitive Performance': ['homocysteine', 'vitaminD', 'freeT3', 'tsh', 'crp', 'cortisolAM', 'fastingGlucose'],
+  'Sleep Quality': ['cortisolAM', 'tsh', 'freeT3', 'vitaminD', 'progesterone'],
+  'Injury Recovery': ['crp', 'vitaminD', 'ferritin', 'igf1', 'testosteroneTotal'],
+  'Hormone Optimization': ['testosteroneTotal', 'freeTestosterone', 'estradiol', 'shbg', 'dheas', 'progesterone', 'prolactin', 'tsh', 'freeT3', 'freeT4'],
+  'Energy/Mitochondrial Health': ['ferritin', 'vitaminD', 'freeT3', 'tsh', 'fastingInsulin', 'hba1c', 'crp', 'cortisolAM'],
+  'Skin/Hair': ['ferritin', 'vitaminD', 'freeT3', 'tsh', 'estradiol', 'dheas', 'testosteroneTotal'],
+  'Immune Support': ['vitaminD', 'crp', 'ferritin', 'totalCholesterol', 'gfr'],
 }
 
-function GoalsStep({
-  goals,
-  onUpdate,
-  onNext,
-}: {
-  goals: string[]
-  onUpdate: (goals: string[]) => void
-  onNext: () => void
-}): ReactNode {
-  const toggleGoal = (goal: string) => {
-    if (goals.includes(goal)) {
-      onUpdate(goals.filter((g) => g !== goal))
-    } else {
-      onUpdate([...goals, goal])
-    }
-  }
-
-  return (
-    <div className="animate-fade-in-up space-y-6">
-      <div>
-        <h2 className="heading-section mb-2">What Are Your Goals?</h2>
-        <p className="text-body text-warm-700">
-          Select at least one goal. You can choose multiple.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {GOAL_OPTIONS.map((goal) => (
-          <button
-            key={goal}
-            onClick={() => toggleGoal(goal)}
-            className={`px-4 py-3 rounded-full text-sm font-medium transition-all duration-200 border-2 ${
-              goals.includes(goal)
-                ? 'bg-sage-600 text-white border-sage-600'
-                : 'bg-white text-warm-800 border-warm-200 hover:border-sage-300'
-            }`}
-          >
-            {goal}
-          </button>
-        ))}
-      </div>
-
-      {goals.length === 0 && (
-        <div className="rounded-lg bg-sand-50 p-4 border border-sand-200 text-sm text-warm-700">
-          Please select at least one goal to continue.
-        </div>
-      )}
-
-      <button
-        onClick={onNext}
-        disabled={goals.length === 0}
-        className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
-      >
-        Next: Profile
-      </button>
-    </div>
-  )
+function getRecommendedMarkers(goals: string[]): string[] {
+  const recommended = new Set<string>()
+  goals.forEach(goal => {
+    const markers = GOAL_MARKER_MAP[goal] || []
+    markers.forEach(m => recommended.add(m))
+  })
+  return Array.from(recommended)
 }
 
-function ProfileStep({
-  formData,
-  onUpdate,
-  onNext,
-  onSkip,
-}: {
-  formData: FormData
-  onUpdate: (data: Partial<FormData>) => void
-  onNext: () => void
-  onSkip: () => void
-}): ReactNode {
-  return (
-    <div className="animate-fade-in-up space-y-6">
-      <div>
-        <h2 className="heading-section mb-2">Basic Profile</h2>
-        <p className="text-body text-warm-700">
-          This information helps personalize your protocol. You can skip this
-          step if you prefer.
-        </p>
-      </div>
-
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-warm-900 mb-2">
-            Age
-          </label>
-          <input
-            type="number"
-            min="18"
-            max="120"
-            value={formData.age || ''}
-            onChange={(e) =>
-              onUpdate({ age: e.target.value ? parseInt(e.target.value) : undefined })
-            }
-            placeholder="e.g., 35"
-            className="w-full px-4 py-2.5 rounded-lg border border-warm-300 bg-white text-warm-900 placeholder-warm-500 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent transition-all"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-warm-900 mb-2">
-            Biological Sex
-          </label>
-          <select
-            value={formData.biologicalSex || ''}
-            onChange={(e) => onUpdate({ biologicalSex: e.target.value })}
-            className="w-full px-4 py-2.5 rounded-lg border border-warm-300 bg-white text-warm-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent transition-all"
-          >
-            <option value="">Select...</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Other">Prefer not to say</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-warm-900 mb-2">
-            Weight
-          </label>
-          <div className="flex gap-3">
-            <input
-              type="number"
-              min="0"
-              max="500"
-              step="0.1"
-              value={formData.weight || ''}
-              onChange={(e) =>
-                onUpdate({
-                  weight: e.target.value ? parseFloat(e.target.value) : undefined,
-                })
-              }
-              placeholder="e.g., 175"
-              className="flex-1 px-4 py-2.5 rounded-lg border border-warm-300 bg-white text-warm-900 placeholder-warm-500 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent transition-all"
-            />
-            <select
-              value={formData.weightUnit || 'lbs'}
-              onChange={(e) =>
-                onUpdate({ weightUnit: e.target.value as 'lbs' | 'kg' })
-              }
-              className="px-4 py-2.5 rounded-lg border border-warm-300 bg-white text-warm-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent transition-all"
-            >
-              <option value="lbs">lbs</option>
-              <option value="kg">kg</option>
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-warm-900 mb-2">
-            Activity Level
-          </label>
-          <select
-            value={formData.activityLevel || ''}
-            onChange={(e) => onUpdate({ activityLevel: e.target.value })}
-            className="w-full px-4 py-2.5 rounded-lg border border-warm-300 bg-white text-warm-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent transition-all"
-          >
-            <option value="">Select...</option>
-            {ACTIVITY_LEVELS.map((level) => (
-              <option key={level} value={level}>
-                {level}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-warm-900 mb-2">
-            Current Medications or Conditions
-          </label>
-          <textarea
-            value={formData.conditions || ''}
-            onChange={(e) => onUpdate({ conditions: e.target.value })}
-            placeholder="e.g., Hypertension managed with lisinopril, no allergies..."
-            rows={3}
-            className="w-full px-4 py-2.5 rounded-lg border border-warm-300 bg-white text-warm-900 placeholder-warm-500 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent transition-all resize-none"
-          />
-        </div>
-      </div>
-
-      <div className="flex gap-3 flex-wrap">
-        <button
-          onClick={onNext}
-          className="btn-primary"
-        >
-          Next: Advanced Data
-        </button>
-        <button
-          onClick={onSkip}
-          className="btn-secondary"
-        >
-          Skip This Step
-        </button>
-      </div>
-    </div>
-  )
-}
-
-function AdvancedStep({
-  formData,
-  onUpdate,
-  onNext,
-  onSkip,
-}: {
-  formData: FormData
-  onUpdate: (data: Partial<FormData>) => void
-  onNext: () => void
-  onSkip: () => void
-}): ReactNode {
-  const bloodwork = formData.bloodwork || {}
-
-  const updateBloodwork = (key: string, value: number | undefined) => {
-    onUpdate({
-      bloodwork: {
-        ...bloodwork,
-        [key]: value,
-      },
-    })
-  }
-
-  return (
-    <div className="animate-fade-in-up space-y-6">
-      <div>
-        <h2 className="heading-section mb-2">Advanced Health Data</h2>
-        <p className="text-body text-warm-700">
-          Optional: Include your bloodwork and genetic data for more precise
-          recommendations. All fields are optional.
-        </p>
-      </div>
-
-      <div className="space-y-6">
-        <div>
-          <h3 className="font-semibold text-warm-900 mb-4">Bloodwork Values</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-warm-900 mb-2">
-                Fasting Insulin (μIU/mL)
-              </label>
-              <input
-                type="number"
-                step="0.1"
-                value={bloodwork.fastingInsulin || ''}
-                onChange={(e) =>
-                  updateBloodwork(
-                    'fastingInsulin',
-                    e.target.value ? parseFloat(e.target.value) : undefined
-                  )
-                }
-                placeholder="e.g., 3.2"
-                className="w-full px-4 py-2.5 rounded-lg border border-warm-300 bg-white text-warm-900 placeholder-warm-500 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-warm-900 mb-2">
-                IGF-1 (ng/mL)
-              </label>
-              <input
-                type="number"
-                step="1"
-                value={bloodwork.igf1 || ''}
-                onChange={(e) =>
-                  updateBloodwork('igf1', e.target.value ? parseFloat(e.target.value) : undefined)
-                }
-                placeholder="e.g., 220"
-                className="w-full px-4 py-2.5 rounded-lg border border-warm-300 bg-white text-warm-900 placeholder-warm-500 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-warm-900 mb-2">
-                CRP/hs-CRP (mg/L)
-              </label>
-              <input
-                type="number"
-                step="0.1"
-                value={bloodwork.crp || ''}
-                onChange={(e) =>
-                  updateBloodwork('crp', e.target.value ? parseFloat(e.target.value) : undefined)
-                }
-                placeholder="e.g., 0.8"
-                className="w-full px-4 py-2.5 rounded-lg border border-warm-300 bg-white text-warm-900 placeholder-warm-500 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-warm-900 mb-2">
-                Testosterone (Total) (ng/dL)
-              </label>
-              <input
-                type="number"
-                step="1"
-                value={bloodwork.testosterone || ''}
-                onChange={(e) =>
-                  updateBloodwork(
-                    'testosterone',
-                    e.target.value ? parseFloat(e.target.value) : undefined
-                  )
-                }
-                placeholder="e.g., 650"
-                className="w-full px-4 py-2.5 rounded-lg border border-warm-300 bg-white text-warm-900 placeholder-warm-500 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-warm-900 mb-2">
-                Estradiol (pg/mL)
-              </label>
-              <input
-                type="number"
-                step="0.1"
-                value={bloodwork.estradiol || ''}
-                onChange={(e) =>
-                  updateBloodwork(
-                    'estradiol',
-                    e.target.value ? parseFloat(e.target.value) : undefined
-                  )
-                }
-                placeholder="e.g., 25"
-                className="w-full px-4 py-2.5 rounded-lg border border-warm-300 bg-white text-warm-900 placeholder-warm-500 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-warm-900 mb-2">
-                Free T3 (pg/mL)
-              </label>
-              <input
-                type="number"
-                step="0.1"
-                value={bloodwork.freeT3 || ''}
-                onChange={(e) =>
-                  updateBloodwork(
-                    'freeT3',
-                    e.target.value ? parseFloat(e.target.value) : undefined
-                  )
-                }
-                placeholder="e.g., 3.4"
-                className="w-full px-4 py-2.5 rounded-lg border border-warm-300 bg-white text-warm-900 placeholder-warm-500 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-warm-900 mb-2">
-                TSH (mIU/L)
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                value={bloodwork.tsh || ''}
-                onChange={(e) =>
-                  updateBloodwork('tsh', e.target.value ? parseFloat(e.target.value) : undefined)
-                }
-                placeholder="e.g., 1.5"
-                className="w-full px-4 py-2.5 rounded-lg border border-warm-300 bg-white text-warm-900 placeholder-warm-500 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-warm-900 mb-2">
-                Fasting Glucose (mg/dL)
-              </label>
-              <input
-                type="number"
-                step="1"
-                value={bloodwork.fastingGlucose || ''}
-                onChange={(e) =>
-                  updateBloodwork(
-                    'fastingGlucose',
-                    e.target.value ? parseFloat(e.target.value) : undefined
-                  )
-                }
-                placeholder="e.g., 92"
-                className="w-full px-4 py-2.5 rounded-lg border border-warm-300 bg-white text-warm-900 placeholder-warm-500 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-warm-900 mb-2">
-                HbA1c (%)
-              </label>
-              <input
-                type="number"
-                step="0.1"
-                value={bloodwork.hba1c || ''}
-                onChange={(e) =>
-                  updateBloodwork(
-                    'hba1c',
-                    e.target.value ? parseFloat(e.target.value) : undefined
-                  )
-                }
-                placeholder="e.g., 5.1"
-                className="w-full px-4 py-2.5 rounded-lg border border-warm-300 bg-white text-warm-900 placeholder-warm-500 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-warm-900 mb-2">
-                Vitamin D (ng/mL)
-              </label>
-              <input
-                type="number"
-                step="1"
-                value={bloodwork.vitaminD || ''}
-                onChange={(e) =>
-                  updateBloodwork(
-                    'vitaminD',
-                    e.target.value ? parseFloat(e.target.value) : undefined
-                  )
-                }
-                placeholder="e.g., 55"
-                className="w-full px-4 py-2.5 rounded-lg border border-warm-300 bg-white text-warm-900 placeholder-warm-500 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent transition-all"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-warm-900 mb-2">
-            Current Supplements/Peptides
-          </label>
-          <textarea
-            value={formData.supplements || ''}
-            onChange={(e) => onUpdate({ supplements: e.target.value })}
-            placeholder="e.g., Omega-3 fish oil, Magnesium glycinate, BPC-157 500mcg daily..."
-            rows={3}
-            className="w-full px-4 py-2.5 rounded-lg border border-warm-300 bg-white text-warm-900 placeholder-warm-500 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent transition-all resize-none"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-warm-900 mb-2">
-            Known Genetic Variants
-          </label>
-          <textarea
-            value={formData.geneticVariants || ''}
-            onChange={(e) => onUpdate({ geneticVariants: e.target.value })}
-            placeholder="e.g., MTHFR C677T heterozygous, COMT V158M..."
-            rows={2}
-            className="w-full px-4 py-2.5 rounded-lg border border-warm-300 bg-white text-warm-900 placeholder-warm-500 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent transition-all resize-none"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-warm-900 mb-2">
-            Health History Notes
-          </label>
-          <textarea
-            value={formData.healthHistory || ''}
-            onChange={(e) => onUpdate({ healthHistory: e.target.value })}
-            placeholder="e.g., History of autoimmune issues, family history of diabetes..."
-            rows={2}
-            className="w-full px-4 py-2.5 rounded-lg border border-warm-300 bg-white text-warm-900 placeholder-warm-500 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent transition-all resize-none"
-          />
-        </div>
-      </div>
-
-      <div className="flex gap-3 flex-wrap">
-        <button
-          onClick={onNext}
-          className="btn-primary"
-        >
-          Next: Email & Generate
-        </button>
-        <button
-          onClick={onSkip}
-          className="btn-secondary"
-        >
-          Skip This Step
-        </button>
-      </div>
-    </div>
-  )
-}
-
-function EmailStep({
-  formData,
-  onUpdate,
-  onNext,
-  onGenerate,
-  isLoading,
-}: {
-  formData: FormData
-  onUpdate: (data: Partial<FormData>) => void
-  onNext: () => void
-  onGenerate: () => void
-  isLoading: boolean
-}): ReactNode {
-  const [expanded, setExpanded] = useState(false)
-
-  const canGenerate = formData.email && formData.goals.length > 0
-
-  return (
-    <div className="animate-fade-in-up space-y-6">
-      <div>
-        <h2 className="heading-section mb-2">Email & Generate</h2>
-        <p className="text-body text-warm-700">
-          Enter your email to receive your personalized protocol.
-        </p>
-      </div>
-
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-warm-900 mb-2">
-            Email Address <span className="text-sage-600">*</span>
-          </label>
-          <input
-            type="email"
-            value={formData.email || ''}
-            onChange={(e) => onUpdate({ email: e.target.value })}
-            placeholder="your@email.com"
-            className="w-full px-4 py-2.5 rounded-lg border border-warm-300 bg-white text-warm-900 placeholder-warm-500 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent transition-all"
-          />
-          <p className="text-xs text-warm-700 mt-2">
-            Your health data is processed in real-time and never permanently stored.
-          </p>
-        </div>
-
-        <div className="bg-sand-50 p-4 rounded-lg border border-sand-200">
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="flex items-center gap-2 text-sm font-medium text-warm-900 hover:text-sage-700 transition-colors"
-          >
-            <span>{expanded ? '−' : '+'}</span>
-            Review Your Information
-          </button>
-          {expanded && (
-            <div className="mt-4 space-y-3 text-sm text-warm-800">
-              <div>
-                <span className="font-medium">Goals:</span>{' '}
-                {formData.goals.length > 0
-                  ? formData.goals.join(', ')
-                  : 'None selected'}
-              </div>
-              {formData.age && (
-                <div>
-                  <span className="font-medium">Age:</span> {formData.age}
-                </div>
-              )}
-              {formData.weight && (
-                <div>
-                  <span className="font-medium">Weight:</span> {formData.weight}{' '}
-                  {formData.weightUnit}
-                </div>
-              )}
-              {formData.biologicalSex && (
-                <div>
-                  <span className="font-medium">Sex:</span> {formData.biologicalSex}
-                </div>
-              )}
-              {formData.activityLevel && (
-                <div>
-                  <span className="font-medium">Activity Level:</span>{' '}
-                  {formData.activityLevel}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <button
-        onClick={() => {
-          onNext()
-          onGenerate()
-        }}
-        disabled={!canGenerate || isLoading}
-        className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
-      >
-        {isLoading ? 'Generating...' : 'Generate My Protocol'}
-      </button>
-    </div>
-  )
-}
-
-function LoadingStep(): ReactNode {
-  const steps = [
-    'Analyzing your goals...',
-    'Matching compounds...',
-    'Building dosing schedule...',
-    'Generating protocol...',
-  ]
-
-  return (
-    <div className="animate-fade-in-up space-y-6 text-center py-12">
-      <div className="inline-block">
-        <div className="w-12 h-12 border-4 border-sage-200 border-t-sage-600 rounded-full animate-spin mx-auto"></div>
-      </div>
-
-      <div>
-        <h2 className="heading-section mb-4">
-          Our AI is analyzing your profile...
-        </h2>
-        <p className="text-body text-warm-700 mb-6">
-          Building your personalized protocol based on your unique goals and health
-          data.
-        </p>
-      </div>
-
-      <div className="space-y-2">
-        {steps.map((step, index) => (
-          <div
-            key={step}
-            className="text-sm text-warm-700 animate-fade-in-up"
-            style={{ animationDelay: `${index * 0.2}s` }}
-          >
-            <span className="inline-block w-2 h-2 rounded-full bg-sage-600 mr-2"></span>
-            {step}
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function ResultsStep({
-  protocol,
-  email,
-  onReset,
-}: {
-  protocol: ProtocolResult
-  email: string
-  onReset: () => void
-}): ReactNode {
-  const [emailSent, setEmailSent] = useState(false)
-  const [isSending, setIsSending] = useState(false)
-  const [downloadError, setDownloadError] = useState<string>('')
-
-  const handleDownloadPDF = async () => {
-    try {
-      setDownloadError('')
-      const response = await fetch('/api/generate-pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ protocol }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to generate PDF')
-      }
-
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'personalized-protocol.pdf'
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
-    } catch (error) {
-      setDownloadError('Failed to download PDF. Please try again.')
-      console.error('PDF download error:', error)
-    }
-  }
-
-  const handleSendEmail = async () => {
-    try {
-      setEmailSent(false)
-      setIsSending(true)
-      const response = await fetch('/api/send-protocol-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, protocol }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to send email')
-      }
-
-      setEmailSent(true)
-      setTimeout(() => setEmailSent(false), 5000)
-    } catch (error) {
-      console.error('Email send error:', error)
-    } finally {
-      setIsSending(false)
-    }
-  }
-
-  return (
-    <div className="animate-fade-in-up space-y-8">
-      <div className="text-center">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-sage-100 mb-4">
-          <div className="w-6 h-6 rounded-full border-2 border-sage-600 border-t-transparent"></div>
-        </div>
-        <h2 className="heading-section mb-2">Your Protocol is Ready</h2>
-        <p className="text-body text-warm-700">
-          Here's your personalized peptide protocol based on your unique profile.
-        </p>
-      </div>
-
-      <div className="bg-white rounded-2xl border border-warm-200 p-6 sm:p-8 space-y-6">
-        <div>
-          <h3 className="font-display text-2xl font-medium text-warm-900 mb-2">
-            {protocol.title}
-          </h3>
-          <p className="text-body text-warm-700">{protocol.summary}</p>
-        </div>
-
-        <div className="space-y-6 border-t border-warm-200 pt-6">
-          {protocol.sections.map((section, idx) => (
-            <div key={idx} className="space-y-3">
-              <h4 className="font-semibold text-warm-900 text-lg">
-                {section.heading}
-              </h4>
-              <div
-                className="text-body text-warm-800 space-y-2"
-                dangerouslySetInnerHTML={{ __html: section.content }}
-              />
-              {section.subsections && section.subsections.length > 0 && (
-                <div className="space-y-3 ml-4 border-l-2 border-sage-200 pl-4">
-                  {section.subsections.map((sub, subIdx) => (
-                    <div key={subIdx}>
-                      <h5 className="font-medium text-warm-900">
-                        {sub.title}
-                      </h5>
-                      <div
-                        className="text-sm text-warm-800 mt-1"
-                        dangerouslySetInnerHTML={{ __html: sub.content }}
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div className="rounded-lg bg-sand-50 p-4 border border-sand-200 text-sm text-warm-700">
-          <p className="font-semibold text-warm-900 mb-2">Important Reminder</p>
-          {protocol.disclaimer}
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        {downloadError && (
-          <div className="p-3 rounded-lg bg-red-50 text-red-700 text-sm">
-            {downloadError}
-          </div>
-        )}
-
-        {emailSent && (
-          <div className="p-3 rounded-lg bg-sage-50 text-sage-700 text-sm">
-            Protocol sent to {email}!
-          </div>
-        )}
-
-        <div className="flex flex-col sm:flex-row gap-3">
-          <button
-            onClick={handleDownloadPDF}
-            className="btn-primary inline-flex items-center justify-center gap-2"
-          >
-            <Download size={16} />
-            Download PDF
-          </button>
-
-          <button
-            onClick={handleSendEmail}
-            disabled={isSending}
-            className="btn-secondary inline-flex items-center justify-center gap-2 disabled:opacity-50"
-          >
-            <Mail size={16} />
-            {isSending ? 'Sending...' : 'Email Me This'}
-          </button>
-
-          <button
-            onClick={onReset}
-            className="btn-secondary inline-flex items-center justify-center gap-2"
-          >
-            <RotateCcw size={16} />
-            Start Over
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// Main Wizard Component
 export default function ProtocolWizard() {
   const [state, dispatch] = useReducer(wizardReducer, initialState)
-  const [consentGiven, setConsentGiven] = useState(false)
+  const [showAllMarkers, setShowAllMarkers] = useState(false)
 
-  const stepIndex = {
-    disclaimer: 0,
-    goals: 1,
-    profile: 2,
-    advanced: 3,
-    email: 4,
-    loading: 5,
-    results: 6,
+  const currentStepIndex = (['disclaimer', 'goals', 'priority', 'experience', 'lifestyle', 'profile', 'advanced', 'review', 'loading', 'results'] as const).indexOf(state.currentStep as any)
+
+  // Determine if we should skip the priority step
+  const shouldShowPriorityStep = state.formData.goals.length >= 3
+
+  const getNextStep = (current: WizardStep): WizardStep => {
+    const steps: WizardStep[] = ['disclaimer', 'goals', 'experience', 'lifestyle', 'profile', 'advanced', 'review', 'loading', 'results']
+    if (shouldShowPriorityStep && current === 'goals') {
+      return 'priority'
+    }
+    if (current === 'priority') {
+      return 'experience'
+    }
+    const currentIdx = steps.indexOf(current)
+    return steps[currentIdx + 1] || current
   }
 
-  const currentStepIndex = stepIndex[state.currentStep]
-  const totalSteps = 6 // Not counting results as a "step" in progress
-
-  const goToStep = (step: WizardStep) => {
-    dispatch({ type: 'SET_STEP', payload: step })
+  const getPrevStep = (current: WizardStep): WizardStep => {
+    if (current === 'experience' && shouldShowPriorityStep) {
+      return 'priority'
+    }
+    const steps: WizardStep[] = ['disclaimer', 'goals', 'priority', 'experience', 'lifestyle', 'profile', 'advanced', 'review', 'loading', 'results']
+    const currentIdx = steps.indexOf(current)
+    return steps[currentIdx - 1] || current
   }
 
-  const handleDisclaimerNext = () => {
-    setConsentGiven(true)
-    goToStep('goals')
+  const handleGoalToggle = (goal: string) => {
+    const updated = state.formData.goals.includes(goal)
+      ? state.formData.goals.filter(g => g !== goal)
+      : [...state.formData.goals, goal]
+    dispatch({ type: 'UPDATE_FORM', payload: { goals: updated } })
   }
 
-  const handleGoalsNext = () => {
-    goToStep('profile')
+  const handlePriorityToggle = (priority: string) => {
+    const updated = state.formData.topPriorities.includes(priority)
+      ? state.formData.topPriorities.filter(p => p !== priority)
+      : [...state.formData.topPriorities, priority]
+    const limited = updated.slice(0, 2)
+    dispatch({ type: 'UPDATE_FORM', payload: { topPriorities: limited } })
   }
 
-  const handleProfileNext = () => {
-    goToStep('advanced')
-  }
-
-  const handleProfileSkip = () => {
-    goToStep('advanced')
-  }
-
-  const handleAdvancedNext = () => {
-    goToStep('email')
-  }
-
-  const handleAdvancedSkip = () => {
-    goToStep('email')
+  const handleRouteToggle = (route: string) => {
+    const updated = state.formData.preferredRoutes.includes(route)
+      ? state.formData.preferredRoutes.filter(r => r !== route)
+      : [...state.formData.preferredRoutes, route]
+    dispatch({ type: 'UPDATE_FORM', payload: { preferredRoutes: updated } })
   }
 
   const handleGenerateProtocol = async () => {
+    dispatch({ type: 'SET_STEP', payload: 'loading' })
     try {
-      goToStep('loading')
-      dispatch({ type: 'SET_ERROR', payload: '' })
-
       const response = await fetch('/api/generate-protocol', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(state.formData),
       })
-
-      if (!response.ok) {
-        throw new Error('Failed to generate protocol')
-      }
-
-      const protocol: ProtocolResult = await response.json()
+      if (!response.ok) throw new Error('Failed to generate protocol')
+      const protocol = await response.json()
       dispatch({ type: 'SET_PROTOCOL', payload: protocol })
-
-      // Simulate a minimum loading time for better UX
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-
-      goToStep('results')
+      dispatch({ type: 'SET_STEP', payload: 'results' })
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error occurred'
-      dispatch({ type: 'SET_ERROR', payload: errorMessage })
-      goToStep('email')
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to generate protocol. Please try again.' })
+      dispatch({ type: 'SET_STEP', payload: 'review' })
+    }
+  }
+
+  const handleDownloadPDF = async () => {
+    if (!state.protocol) return
+    try {
+      const response = await fetch('/api/generate-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(state.protocol),
+      })
+      if (!response.ok) throw new Error('Failed to generate PDF')
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'protocol.pdf'
+      a.click()
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to download PDF. Please try again.' })
+    }
+  }
+
+  const handleEmailProtocol = async () => {
+    if (!state.protocol || !state.formData.email) return
+    try {
+      const response = await fetch('/api/send-protocol-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: state.formData.email,
+          protocol: state.protocol,
+        }),
+      })
+      if (!response.ok) throw new Error('Failed to send email')
+      alert('Protocol sent to your email!')
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to send email. Please try again.' })
     }
   }
 
   const handleReset = () => {
     dispatch({ type: 'RESET' })
-    setConsentGiven(false)
   }
 
-  const handleBack = () => {
-    const steps: WizardStep[] = ['disclaimer', 'goals', 'profile', 'advanced', 'email']
-    const currentIndex = steps.indexOf(state.currentStep)
-    if (currentIndex > 0) {
-      goToStep(steps[currentIndex - 1])
+  const handleStepChange = (step: WizardStep) => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    dispatch({ type: 'SET_STEP', payload: step })
+  }
+
+  const handleNext = () => {
+    const next = getNextStep(state.currentStep)
+    handleStepChange(next)
+  }
+
+  const handlePrev = () => {
+    const prev = getPrevStep(state.currentStep)
+    handleStepChange(prev)
+  }
+
+  const canProceed = (): boolean => {
+    switch (state.currentStep) {
+      case 'disclaimer':
+        return state.disclaimerAccepted
+      case 'goals':
+        return state.formData.goals.length > 0
+      case 'priority':
+        return state.formData.topPriorities.length > 0
+      case 'experience':
+        return state.formData.peptideExperience !== ''
+      case 'lifestyle':
+        return true
+      case 'profile':
+        return true
+      case 'advanced':
+        return true
+      case 'review':
+        return true
+      default:
+        return false
     }
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
-      {/* Progress Bar */}
-      {state.currentStep !== 'disclaimer' && state.currentStep !== 'loading' && state.currentStep !== 'results' && (
-        <div className="mb-8">
-          <div className="flex justify-between mb-2">
-            <span className="text-xs font-medium text-warm-700">
-              Step {currentStepIndex} of {totalSteps}
-            </span>
+    <div className="min-h-screen bg-gradient-to-b from-sand-50 via-white to-sand-50 py-12 px-4">
+      <div className="mx-auto max-w-3xl">
+        {/* Progress Bar */}
+        {state.currentStep !== 'loading' && state.currentStep !== 'results' && (
+          <div className="mb-12">
+            <div className="h-1 w-full bg-sage-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-sage-600 to-sage-500 transition-all duration-300"
+                style={{
+                  width: `${((currentStepIndex) / 8) * 100}%`,
+                }}
+              />
+            </div>
           </div>
-          <div className="h-2 bg-warm-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-sage-600 transition-all duration-300"
-              style={{
-                width: `${((currentStepIndex) / totalSteps) * 100}%`,
-              }}
-            />
+        )}
+
+        {/* Error Message */}
+        {state.error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex gap-3 animate-fade-in-up">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <p className="text-red-700">{state.error}</p>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Steps */}
-      {state.currentStep === 'disclaimer' && (
-        <DisclaimerStep onNext={handleDisclaimerNext} />
-      )}
+        {/* Step 1: Disclaimer */}
+        {state.currentStep === 'disclaimer' && (
+          <div className="animate-fade-in-up">
+            <h1 className="font-display text-4xl text-sage-900 mb-6">Important Disclaimer</h1>
+            <div className="card bg-white p-8 mb-8">
+              <p className="text-body text-gray-700 mb-4">
+                This protocol wizard is designed to provide personalized peptide recommendations based on your health profile, goals, and experience level. However, <strong>these recommendations are not medical advice</strong>.
+              </p>
+              <p className="text-body text-gray-700 mb-4">
+                Peptides are research compounds that may carry risks. Before using any peptide:
+              </p>
+              <ul className="list-disc list-inside space-y-2 text-body text-gray-700 mb-4">
+                <li>Consult with a qualified healthcare provider</li>
+                <li>Verify the legal status in your jurisdiction</li>
+                <li>Research potential side effects and interactions</li>
+                <li>Source products only from reputable suppliers</li>
+                <li>Do not use if pregnant, nursing, or under 18</li>
+              </ul>
+              <p className="text-body text-gray-700 mb-6">
+                By proceeding, you acknowledge that you understand these risks and take full responsibility for your health decisions.
+              </p>
 
-      {state.currentStep === 'goals' && (
-        <GoalsStep
-          goals={state.formData.goals}
-          onUpdate={(goals) => dispatch({ type: 'UPDATE_FORM', payload: { goals } })}
-          onNext={handleGoalsNext}
-        />
-      )}
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={state.disclaimerAccepted}
+                  onChange={(e) => dispatch({ type: 'SET_DISCLAIMER_ACCEPTED', payload: e.target.checked })}
+                  className="w-5 h-5 mt-1 text-sage-600"
+                />
+                <span className="text-body text-gray-700">
+                  I understand the risks and take full responsibility for my health decisions. I will consult with a healthcare provider before using any peptides.
+                </span>
+              </label>
+            </div>
 
-      {state.currentStep === 'profile' && (
-        <ProfileStep
-          formData={state.formData}
-          onUpdate={(data) => dispatch({ type: 'UPDATE_FORM', payload: data })}
-          onNext={handleProfileNext}
-          onSkip={handleProfileSkip}
-        />
-      )}
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={handleNext}
+                disabled={!canProceed()}
+                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                I Agree, Continue
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
 
-      {state.currentStep === 'advanced' && (
-        <AdvancedStep
-          formData={state.formData}
-          onUpdate={(data) => dispatch({ type: 'UPDATE_FORM', payload: data })}
-          onNext={handleAdvancedNext}
-          onSkip={handleAdvancedSkip}
-        />
-      )}
+        {/* Step 2: Goals */}
+        {state.currentStep === 'goals' && (
+          <div className="animate-fade-in-up">
+            <h1 className="font-display text-4xl text-sage-900 mb-2">What are your health goals?</h1>
+            <p className="text-body text-gray-600 mb-8">Select all that apply. You can prioritize them next.</p>
 
-      {state.currentStep === 'email' && (
-        <EmailStep
-          formData={state.formData}
-          onUpdate={(data) => dispatch({ type: 'UPDATE_FORM', payload: data })}
-          onNext={handleAdvancedNext}
-          onGenerate={handleGenerateProtocol}
-          isLoading={false}
-        />
-      )}
+            <div className="card bg-white p-8 mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {GOAL_OPTIONS.map(goal => (
+                  <button
+                    key={goal}
+                    onClick={() => handleGoalToggle(goal)}
+                    className={`px-4 py-3 rounded-full font-sans font-medium transition-all text-sm ${
+                      state.formData.goals.includes(goal)
+                        ? 'bg-sage-600 text-white shadow-md'
+                        : 'bg-sage-50 text-sage-700 border border-sage-200 hover:border-sage-400'
+                    }`}
+                  >
+                    {goal}
+                  </button>
+                ))}
+              </div>
+              {state.formData.goals.length === 0 && (
+                <p className="text-body text-gray-500 text-center mt-6">Please select at least one goal</p>
+              )}
+            </div>
 
-      {state.currentStep === 'loading' && <LoadingStep />}
+            <div className="flex justify-between gap-4">
+              <button
+                onClick={handlePrev}
+                className="btn-secondary flex items-center gap-2"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Back
+              </button>
+              <button
+                onClick={handleNext}
+                disabled={!canProceed()}
+                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                Next
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
 
-      {state.currentStep === 'results' && state.protocol && (
-        <ResultsStep
-          protocol={state.protocol}
-          email={state.formData.email || ''}
-          onReset={handleReset}
-        />
-      )}
+        {/* Step 3: Priority Ranking */}
+        {state.currentStep === 'priority' && (
+          <div className="animate-fade-in-up">
+            <h1 className="font-display text-4xl text-sage-900 mb-2">What are your top priorities?</h1>
+            <p className="text-body text-gray-600 mb-8">Select your top 1-2 goals. We'll tailor recommendations accordingly.</p>
 
-      {/* Error Message */}
-      {state.error && (
-        <div className="mt-6 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
-          {state.error}
-        </div>
-      )}
+            <div className="card bg-white p-8 mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {state.formData.goals.map((goal, idx) => (
+                  <button
+                    key={goal}
+                    onClick={() => handlePriorityToggle(goal)}
+                    className={`px-4 py-3 rounded-full font-sans font-medium transition-all text-sm flex items-center gap-2 ${
+                      state.formData.topPriorities.includes(goal)
+                        ? 'bg-sage-600 text-white shadow-md'
+                        : 'bg-sage-50 text-sage-700 border border-sage-200 hover:border-sage-400'
+                    }`}
+                  >
+                    {state.formData.topPriorities.includes(goal) && (
+                      <span className="font-bold">
+                        {state.formData.topPriorities.indexOf(goal) + 1}.
+                      </span>
+                    )}
+                    {goal}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-      {/* Navigation */}
-      {state.currentStep !== 'disclaimer' && state.currentStep !== 'loading' && state.currentStep !== 'results' && (
-        <div className="mt-8 flex gap-3">
-          <button
-            onClick={handleBack}
-            className="btn-secondary inline-flex items-center gap-2"
-          >
-            <ChevronLeft size={16} />
-            Back
-          </button>
-        </div>
-      )}
+            <div className="flex justify-between gap-4">
+              <button
+                onClick={handlePrev}
+                className="btn-secondary flex items-center gap-2"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Back
+              </button>
+              <button
+                onClick={handleNext}
+                disabled={!canProceed()}
+                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                Next
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: Experience & Preferences */}
+        {state.currentStep === 'experience' && (
+          <div className="animate-fade-in-up">
+            <h1 className="font-display text-4xl text-sage-900 mb-2">Experience & Preferences</h1>
+            <p className="text-body text-gray-600 mb-8">Tell us about your peptide background and preferences.</p>
+
+            <div className="space-y-8">
+              {/* Peptide Experience */}
+              <div className="card bg-white p-8">
+                <h2 className="heading-section mb-6">Peptide Experience Level</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[
+                    { value: 'never', label: 'Never Used', desc: "I'm completely new to peptides", icon: Sparkles },
+                    { value: 'some', label: 'Some Experience', desc: "I've tried 1-2 peptides before", icon: Beaker },
+                    { value: 'experienced', label: 'Experienced', desc: "I've run multiple protocols", icon: FlaskConical },
+                    { value: 'advanced', label: 'Advanced', desc: "I'm very knowledgeable about peptides", icon: Microscope },
+                  ].map(({ value, label, desc, icon: Icon }) => (
+                    <button
+                      key={value}
+                      onClick={() => dispatch({ type: 'UPDATE_FORM', payload: { peptideExperience: value as any } })}
+                      className={`p-4 rounded-lg border-2 transition-all text-left ${
+                        state.formData.peptideExperience === value
+                          ? 'border-sage-600 bg-sage-50'
+                          : 'border-sage-200 hover:border-sage-400 bg-white'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <Icon className="w-5 h-5 text-sage-600 flex-shrink-0 mt-1" />
+                        <div>
+                          <p className="font-sans font-semibold text-gray-900">{label}</p>
+                          <p className="text-sm text-gray-600 mt-1">{desc}</p>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Preferred Routes */}
+              <div className="card bg-white p-8">
+                <h2 className="heading-section mb-6">Preferred Administration Routes</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {['Oral', 'Subcutaneous Injection', 'Nasal Spray', 'Topical/Cream', 'No Preference'].map(route => (
+                    <button
+                      key={route}
+                      onClick={() => handleRouteToggle(route)}
+                      className={`px-4 py-3 rounded-full font-sans font-medium transition-all text-sm ${
+                        state.formData.preferredRoutes.includes(route)
+                          ? 'bg-sage-600 text-white shadow-md'
+                          : 'bg-sage-50 text-sage-700 border border-sage-200 hover:border-sage-400'
+                      }`}
+                    >
+                      {route}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Time Commitment */}
+              <div className="card bg-white p-8">
+                <h2 className="heading-section mb-6">Time Commitment</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {[
+                    { value: 'minimal', label: 'Minimal', desc: '1-2 compounds, simple schedule' },
+                    { value: 'moderate', label: 'Moderate', desc: '3-5 compounds, structured protocol' },
+                    { value: 'comprehensive', label: 'Comprehensive', desc: 'Full stack, optimized timing' },
+                  ].map(({ value, label, desc }) => (
+                    <button
+                      key={value}
+                      onClick={() => dispatch({ type: 'UPDATE_FORM', payload: { timeCommitment: value as any } })}
+                      className={`p-4 rounded-lg border-2 transition-all text-left ${
+                        state.formData.timeCommitment === value
+                          ? 'border-sage-600 bg-sage-50'
+                          : 'border-sage-200 hover:border-sage-400 bg-white'
+                      }`}
+                    >
+                      <p className="font-sans font-semibold text-gray-900">{label}</p>
+                      <p className="text-sm text-gray-600 mt-2">{desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Previous Peptides */}
+              <div className="card bg-white p-8">
+                <h2 className="heading-section mb-4">Previous Peptide Experience</h2>
+                <p className="text-body text-gray-600 mb-4">Optional. List any peptides you've used before and your experience with them.</p>
+                <textarea
+                  value={state.formData.previousPeptides}
+                  onChange={(e) => dispatch({ type: 'UPDATE_FORM', payload: { previousPeptides: e.target.value } })}
+                  placeholder="e.g., BPC-157 (good recovery), Ipamorelin (minor appetite increase)"
+                  className="w-full px-4 py-3 border border-sage-200 rounded-lg font-sans text-gray-700 placeholder-gray-400 focus:outline-none focus:border-sage-600 focus:ring-1 focus:ring-sage-600 resize-none"
+                  rows={4}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-between gap-4 mt-8">
+              <button
+                onClick={handlePrev}
+                className="btn-secondary flex items-center gap-2"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Back
+              </button>
+              <button
+                onClick={handleNext}
+                disabled={!canProceed()}
+                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                Next
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 5: Lifestyle */}
+        {state.currentStep === 'lifestyle' && (
+          <div className="animate-fade-in-up">
+            <h1 className="font-display text-4xl text-sage-900 mb-2">Lifestyle & Current Status</h1>
+            <p className="text-body text-gray-600 mb-8">This helps us tailor recommendations to your current state.</p>
+
+            <div className="space-y-8">
+              {/* Sleep Quality */}
+              <div className="card bg-white p-8">
+                <h2 className="heading-section mb-6">How would you rate your sleep?</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {['Poor', 'Fair', 'Good', 'Excellent'].map(quality => (
+                    <button
+                      key={quality}
+                      onClick={() => dispatch({ type: 'UPDATE_FORM', payload: { sleepQuality: quality.toLowerCase() as any } })}
+                      className={`px-4 py-3 rounded-lg font-sans font-medium transition-all text-sm ${
+                        state.formData.sleepQuality === quality.toLowerCase()
+                          ? 'bg-sage-600 text-white shadow-md'
+                          : 'bg-sage-50 text-sage-700 border border-sage-200 hover:border-sage-400'
+                      }`}
+                    >
+                      {quality}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Stress Level */}
+              <div className="card bg-white p-8">
+                <h2 className="heading-section mb-6">Current stress level?</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {['Low', 'Moderate', 'High', 'Very High'].map(level => (
+                    <button
+                      key={level}
+                      onClick={() => {
+                        const value = level === 'Very High' ? 'very-high' : level.toLowerCase()
+                        dispatch({ type: 'UPDATE_FORM', payload: { stressLevel: value as any } })
+                      }}
+                      className={`px-4 py-3 rounded-lg font-sans font-medium transition-all text-sm ${
+                        state.formData.stressLevel === (level === 'Very High' ? 'very-high' : level.toLowerCase())
+                          ? 'bg-sage-600 text-white shadow-md'
+                          : 'bg-sage-50 text-sage-700 border border-sage-200 hover:border-sage-400'
+                      }`}
+                    >
+                      {level}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Diet Type */}
+              <div className="card bg-white p-8">
+                <h2 className="heading-section mb-6">Diet approach?</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[
+                    { value: 'standard', label: 'Standard' },
+                    { value: 'keto', label: 'Keto/Low-Carb' },
+                    { value: 'carnivore', label: 'Carnivore' },
+                    { value: 'plant-based', label: 'Plant-Based' },
+                    { value: 'mediterranean', label: 'Mediterranean' },
+                    { value: 'intermittent-fasting', label: 'Intermittent Fasting' },
+                    { value: 'other', label: 'Other' },
+                  ].map(({ value, label }) => (
+                    <button
+                      key={value}
+                      onClick={() => dispatch({ type: 'UPDATE_FORM', payload: { dietType: value as any } })}
+                      className={`px-4 py-3 rounded-lg font-sans font-medium transition-all text-sm ${
+                        state.formData.dietType === value
+                          ? 'bg-sage-600 text-white shadow-md'
+                          : 'bg-sage-50 text-sage-700 border border-sage-200 hover:border-sage-400'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-between gap-4 mt-8">
+              <button
+                onClick={handlePrev}
+                className="btn-secondary flex items-center gap-2"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Back
+              </button>
+              <button
+                onClick={handleNext}
+                className="btn-primary flex items-center gap-2"
+              >
+                Next
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 6: Basic Profile */}
+        {state.currentStep === 'profile' && (
+          <div className="animate-fade-in-up">
+            <h1 className="font-display text-4xl text-sage-900 mb-2">Basic Profile</h1>
+            <p className="text-body text-gray-600 mb-8">Optional. This helps us give you more personalized recommendations.</p>
+
+            <div className="card bg-white p-8 mb-8">
+              <div className="space-y-6">
+                {/* Age */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">Age</label>
+                  <input
+                    type="number"
+                    value={state.formData.age || ''}
+                    onChange={(e) => dispatch({ type: 'UPDATE_FORM', payload: { age: e.target.value ? parseInt(e.target.value) : undefined } })}
+                    placeholder="e.g., 35"
+                    className="w-full px-4 py-3 border border-sage-200 rounded-lg font-sans text-gray-700 placeholder-gray-400 focus:outline-none focus:border-sage-600 focus:ring-1 focus:ring-sage-600"
+                  />
+                </div>
+
+                {/* Sex */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">Biological Sex</label>
+                  <select
+                    value={state.formData.biologicalSex || ''}
+                    onChange={(e) => dispatch({ type: 'UPDATE_FORM', payload: { biologicalSex: e.target.value || undefined } })}
+                    className="w-full px-4 py-3 border border-sage-200 rounded-lg font-sans text-gray-700 focus:outline-none focus:border-sage-600 focus:ring-1 focus:ring-sage-600"
+                  >
+                    <option value="">Select...</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
+                {/* Weight */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">Weight</label>
+                    <input
+                      type="number"
+                      value={state.formData.weight || ''}
+                      onChange={(e) => dispatch({ type: 'UPDATE_FORM', payload: { weight: e.target.value ? parseFloat(e.target.value) : undefined } })}
+                      placeholder="e.g., 180"
+                      className="w-full px-4 py-3 border border-sage-200 rounded-lg font-sans text-gray-700 placeholder-gray-400 focus:outline-none focus:border-sage-600 focus:ring-1 focus:ring-sage-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">Unit</label>
+                    <select
+                      value={state.formData.weightUnit}
+                      onChange={(e) => dispatch({ type: 'UPDATE_FORM', payload: { weightUnit: e.target.value as any } })}
+                      className="w-full px-4 py-3 border border-sage-200 rounded-lg font-sans text-gray-700 focus:outline-none focus:border-sage-600 focus:ring-1 focus:ring-sage-600"
+                    >
+                      <option value="lbs">lbs</option>
+                      <option value="kg">kg</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Activity Level */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">Activity Level</label>
+                  <select
+                    value={state.formData.activityLevel || ''}
+                    onChange={(e) => dispatch({ type: 'UPDATE_FORM', payload: { activityLevel: e.target.value || undefined } })}
+                    className="w-full px-4 py-3 border border-sage-200 rounded-lg font-sans text-gray-700 focus:outline-none focus:border-sage-600 focus:ring-1 focus:ring-sage-600"
+                  >
+                    <option value="">Select...</option>
+                    <option value="sedentary">Sedentary</option>
+                    <option value="lightly-active">Lightly Active</option>
+                    <option value="moderately-active">Moderately Active</option>
+                    <option value="very-active">Very Active</option>
+                    <option value="extremely-active">Extremely Active</option>
+                  </select>
+                </div>
+
+                {/* Conditions */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">Health Conditions</label>
+                  <p className="text-body text-gray-600 mb-3">Optional. List any relevant conditions (e.g., diabetes, autoimmune disorders).</p>
+                  <textarea
+                    value={state.formData.conditions || ''}
+                    onChange={(e) => dispatch({ type: 'UPDATE_FORM', payload: { conditions: e.target.value || undefined } })}
+                    placeholder="e.g., Type 2 Diabetes, GERD"
+                    className="w-full px-4 py-3 border border-sage-200 rounded-lg font-sans text-gray-700 placeholder-gray-400 focus:outline-none focus:border-sage-600 focus:ring-1 focus:ring-sage-600 resize-none"
+                    rows={4}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-between gap-4">
+              <button
+                onClick={handlePrev}
+                className="btn-secondary flex items-center gap-2"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Back
+              </button>
+              <div className="flex gap-4">
+                <button
+                  onClick={handleNext}
+                  className="btn-secondary"
+                >
+                  Skip This Step
+                </button>
+                <button
+                  onClick={handleNext}
+                  className="btn-primary flex items-center gap-2"
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Step 7: Advanced Health Data */}
+        {state.currentStep === 'advanced' && (
+          <div className="animate-fade-in-up">
+            <h1 className="font-display text-4xl text-sage-900 mb-2">Advanced Health Data</h1>
+            <p className="text-body text-gray-600 mb-8">Optional. Bloodwork markers help us fine-tune recommendations.</p>
+
+            <div className="space-y-8">
+              {/* Recommended Markers */}
+              {getRecommendedMarkers(state.formData.goals).length > 0 && (
+                <div className="card bg-white p-8 border-l-4 border-sage-600">
+                  <h2 className="heading-section mb-6">Recommended for your goals</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {BLOODWORK_MARKERS.filter(m => getRecommendedMarkers(state.formData.goals).includes(m.key)).map(marker => (
+                      <div key={marker.key}>
+                        <label className="block text-sm font-semibold text-gray-900 mb-1">
+                          {marker.label} <span className="text-gray-500">({marker.unit})</span>
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={state.formData.bloodwork[marker.key] || ''}
+                          onChange={(e) => dispatch({
+                            type: 'UPDATE_FORM',
+                            payload: {
+                              bloodwork: {
+                                ...state.formData.bloodwork,
+                                [marker.key]: e.target.value ? parseFloat(e.target.value) : undefined,
+                              },
+                            },
+                          })}
+                          placeholder={marker.placeholder}
+                          className="w-full px-3 py-2 border border-sage-200 rounded-lg font-sans text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-sage-600 focus:ring-1 focus:ring-sage-600"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* All Markers - Collapsible */}
+              <div className="card bg-white p-8">
+                <button
+                  onClick={() => setShowAllMarkers(!showAllMarkers)}
+                  className="flex items-center gap-2 text-sage-600 hover:text-sage-700 font-semibold mb-6"
+                >
+                  {showAllMarkers ? '▼' : '▶'} Show all markers
+                </button>
+
+                {showAllMarkers && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {BLOODWORK_MARKERS.map(marker => (
+                      <div key={marker.key}>
+                        <label className="block text-sm font-semibold text-gray-900 mb-1">
+                          {marker.label} <span className="text-gray-500">({marker.unit})</span>
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={state.formData.bloodwork[marker.key] || ''}
+                          onChange={(e) => dispatch({
+                            type: 'UPDATE_FORM',
+                            payload: {
+                              bloodwork: {
+                                ...state.formData.bloodwork,
+                                [marker.key]: e.target.value ? parseFloat(e.target.value) : undefined,
+                              },
+                            },
+                          })}
+                          placeholder={marker.placeholder}
+                          className="w-full px-3 py-2 border border-sage-200 rounded-lg font-sans text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-sage-600 focus:ring-1 focus:ring-sage-600"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Supplements */}
+              <div className="card bg-white p-8">
+                <h2 className="heading-section mb-4">Current Supplements</h2>
+                <p className="text-body text-gray-600 mb-4">Optional. List any supplements you're taking.</p>
+                <textarea
+                  value={state.formData.supplements || ''}
+                  onChange={(e) => dispatch({ type: 'UPDATE_FORM', payload: { supplements: e.target.value || undefined } })}
+                  placeholder="e.g., Vitamin D (4000 IU), Omega-3 (2g), Creatine (5g)"
+                  className="w-full px-4 py-3 border border-sage-200 rounded-lg font-sans text-gray-700 placeholder-gray-400 focus:outline-none focus:border-sage-600 focus:ring-1 focus:ring-sage-600 resize-none"
+                  rows={4}
+                />
+              </div>
+
+              {/* Genetic Variants */}
+              <div className="card bg-white p-8">
+                <h2 className="heading-section mb-4">Known Genetic Variants</h2>
+                <p className="text-body text-gray-600 mb-4">Optional. If you've done genetic testing (23andMe, etc.).</p>
+                <textarea
+                  value={state.formData.geneticVariants || ''}
+                  onChange={(e) => dispatch({ type: 'UPDATE_FORM', payload: { geneticVariants: e.target.value || undefined } })}
+                  placeholder="e.g., MTHFR C677T, ApoE4"
+                  className="w-full px-4 py-3 border border-sage-200 rounded-lg font-sans text-gray-700 placeholder-gray-400 focus:outline-none focus:border-sage-600 focus:ring-1 focus:ring-sage-600 resize-none"
+                  rows={4}
+                />
+              </div>
+
+              {/* Health History */}
+              <div className="card bg-white p-8">
+                <h2 className="heading-section mb-4">Health History</h2>
+                <p className="text-body text-gray-600 mb-4">Optional. Any relevant medical history or family history.</p>
+                <textarea
+                  value={state.formData.healthHistory || ''}
+                  onChange={(e) => dispatch({ type: 'UPDATE_FORM', payload: { healthHistory: e.target.value || undefined } })}
+                  placeholder="e.g., Family history of heart disease, Previous thyroid issues"
+                  className="w-full px-4 py-3 border border-sage-200 rounded-lg font-sans text-gray-700 placeholder-gray-400 focus:outline-none focus:border-sage-600 focus:ring-1 focus:ring-sage-600 resize-none"
+                  rows={4}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-between gap-4 mt-8">
+              <button
+                onClick={handlePrev}
+                className="btn-secondary flex items-center gap-2"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Back
+              </button>
+              <div className="flex gap-4">
+                <button
+                  onClick={handleNext}
+                  className="btn-secondary"
+                >
+                  Skip This Step
+                </button>
+                <button
+                  onClick={handleNext}
+                  className="btn-primary flex items-center gap-2"
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Step 8: Review & Generate */}
+        {state.currentStep === 'review' && (
+          <div className="animate-fade-in-up">
+            <h1 className="font-display text-4xl text-sage-900 mb-2">Review & Generate</h1>
+            <p className="text-body text-gray-600 mb-8">Ready to generate your personalized protocol?</p>
+
+            <div className="space-y-8">
+              {/* Email Field */}
+              <div className="card bg-white p-8">
+                <h2 className="heading-section mb-4">Your Email</h2>
+                <p className="text-body text-gray-600 mb-4">Optional — enter your email to receive a copy of your protocol.</p>
+                <input
+                  type="email"
+                  value={state.formData.email || ''}
+                  onChange={(e) => dispatch({ type: 'UPDATE_FORM', payload: { email: e.target.value || undefined } })}
+                  placeholder="your@email.com"
+                  className="w-full px-4 py-3 border border-sage-200 rounded-lg font-sans text-gray-700 placeholder-gray-400 focus:outline-none focus:border-sage-600 focus:ring-1 focus:ring-sage-600"
+                />
+              </div>
+
+              {/* Summary */}
+              <details className="card bg-white p-8">
+                <summary className="cursor-pointer font-semibold text-gray-900 text-lg flex items-center gap-2">
+                  <span>▶</span> View Summary of Your Answers
+                </summary>
+                <div className="mt-6 space-y-4 text-body text-gray-700">
+                  <div>
+                    <p className="font-semibold">Goals:</p>
+                    <p>{state.formData.goals.join(', ') || 'None selected'}</p>
+                  </div>
+                  {state.formData.topPriorities.length > 0 && (
+                    <div>
+                      <p className="font-semibold">Top Priorities:</p>
+                      <p>{state.formData.topPriorities.join(', ')}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="font-semibold">Experience Level:</p>
+                    <p>{state.formData.peptideExperience || 'Not specified'}</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold">Preferred Routes:</p>
+                    <p>{state.formData.preferredRoutes.join(', ') || 'Not specified'}</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold">Sleep Quality:</p>
+                    <p>{state.formData.sleepQuality || 'Not specified'}</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold">Stress Level:</p>
+                    <p>{state.formData.stressLevel || 'Not specified'}</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold">Diet Type:</p>
+                    <p>{state.formData.dietType || 'Not specified'}</p>
+                  </div>
+                </div>
+              </details>
+
+              {/* Privacy Note */}
+              <div className="bg-sage-50 border border-sage-200 rounded-lg p-6 flex gap-4">
+                <CheckCircle className="w-5 h-5 text-sage-600 flex-shrink-0 mt-0.5" />
+                <p className="text-body text-gray-700">
+                  <strong>Privacy:</strong> Your data is processed in real-time and never stored on our servers. All information is used solely to generate your personalized protocol.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-8 flex justify-between gap-4">
+              <button
+                onClick={handlePrev}
+                className="btn-secondary flex items-center gap-2"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Back
+              </button>
+              <button
+                onClick={handleGenerateProtocol}
+                className="btn-primary text-lg px-8 py-4 flex items-center gap-2"
+              >
+                Generate My Protocol
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 9: Loading */}
+        {state.currentStep === 'loading' && (
+          <div className="animate-fade-in-up text-center py-16">
+            <h1 className="font-display text-4xl text-sage-900 mb-6">Generating Your Protocol</h1>
+            <p className="text-body text-gray-600 mb-12">Please wait while we analyze your data...</p>
+
+            <div className="flex justify-center gap-2 mb-12">
+              <div className="w-3 h-3 bg-sage-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
+              <div className="w-3 h-3 bg-sage-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+              <div className="w-3 h-3 bg-sage-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+            </div>
+
+            <div className="max-w-md mx-auto space-y-3 text-left">
+              {['Analyzing your goals', 'Evaluating experience level', 'Selecting compounds', 'Building schedule', 'Compiling protocol'].map((step, idx) => (
+                <div key={step} className="flex items-center gap-3 text-gray-700">
+                  <CheckCircle className="w-5 h-5 text-sage-600" />
+                  <span>{step}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Step 10: Results */}
+        {state.currentStep === 'results' && state.protocol && (
+          <div className="animate-fade-in-up">
+            <div className="card bg-white p-8 mb-8">
+              <h1 className="font-display text-4xl text-sage-900 mb-2">{state.protocol.title}</h1>
+              <p className="text-body text-gray-600 mb-6">{state.protocol.summary}</p>
+
+              {state.protocol.sections.map((section, idx) => (
+                <div key={idx} className="mb-8">
+                  <h2 className="heading-section mb-4">{section.heading}</h2>
+                  <p className="text-body text-gray-700 mb-4">{section.content}</p>
+                  {section.subsections && (
+                    <div className="space-y-4">
+                      {section.subsections.map((sub, subIdx) => (
+                        <div key={subIdx} className="bg-sage-50 p-4 rounded-lg">
+                          <h3 className="font-semibold text-gray-900 mb-2">{sub.title}</h3>
+                          <p className="text-body text-gray-700">{sub.content}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mt-8">
+                <p className="text-body text-gray-700">{state.protocol.disclaimer}</p>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+              <button
+                onClick={handleDownloadPDF}
+                className="btn-primary flex-1 flex items-center justify-center gap-2 text-lg py-4"
+              >
+                <Download className="w-5 h-5" />
+                Download Protocol
+              </button>
+              {state.formData.email && (
+                <button
+                  onClick={handleEmailProtocol}
+                  className="btn-secondary flex-1 flex items-center justify-center gap-2 text-lg py-4"
+                >
+                  <Mail className="w-5 h-5" />
+                  Email Me This
+                </button>
+              )}
+            </div>
+
+            <div className="text-center">
+              <button
+                onClick={handleReset}
+                className="btn-secondary inline-flex items-center gap-2"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Start Over
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

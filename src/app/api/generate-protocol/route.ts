@@ -3,45 +3,22 @@ import Anthropic from '@anthropic-ai/sdk'
 import { getKnowledgeBase, getCompoundsByGoals, getKnowledgeBaseForContext } from '@/lib/knowledge-base'
 
 /**
- * Request body type
- */
-interface ProtocolRequest {
-  goals: string[]
-  profile: {
-    age: number
-    weight: number
-    sex: 'male' | 'female'
-    experience: 'beginner' | 'intermediate' | 'advanced'
-  }
-  advancedData?: {
-    medications: string[]
-    conditions: string[]
-    biomarkers?: Record<string, number>
-  }
-}
-
-/**
- * Protocol compound entry
- */
-interface ProtocolCompound {
-  name: string
-  purpose: string
-  dose: string
-  route: string
-  frequency: string
-  timing: string
-  cycle: string
-  evidenceLevel: string
-  notes: string
-}
-
-/**
- * Generated protocol response
+ * Generated protocol response — used by generate-pdf and send-protocol-email
  */
 export interface GeneratedProtocol {
   title: string
   overview: string
-  compounds: ProtocolCompound[]
+  compounds: Array<{
+    name: string
+    purpose: string
+    dose: string
+    route: string
+    frequency: string
+    timing: string
+    cycle: string
+    evidenceLevel: string
+    notes: string
+  }>
   weeklySchedule: string
   cyclingProtocol: string
   importantWarnings: string[]
@@ -51,149 +28,133 @@ export interface GeneratedProtocol {
 }
 
 /**
- * Validate request
+ * Build the system prompt with knowledge base and user context
  */
-function validateRequest(body: any): body is ProtocolRequest {
-  if (!body.goals || !Array.isArray(body.goals) || body.goals.length === 0) {
-    return false
+function getSystemPrompt(formData: any, relevantCompounds: string[], knowledgeBase: string): string {
+  // Build user context section
+  const contextLines: string[] = []
+  contextLines.push(`- **Goals:** ${formData.goals.join(', ')}`)
+
+  if (formData.topPriorities?.length > 0) {
+    contextLines.push(`- **Top Priorities:** ${formData.topPriorities.join(', ')}`)
+  }
+  if (formData.age) contextLines.push(`- **Age:** ${formData.age}`)
+  if (formData.biologicalSex) contextLines.push(`- **Biological Sex:** ${formData.biologicalSex}`)
+  if (formData.weight) contextLines.push(`- **Weight:** ${formData.weight} ${formData.weightUnit || 'lbs'}`)
+  if (formData.activityLevel) contextLines.push(`- **Activity Level:** ${formData.activityLevel}`)
+  if (formData.peptideExperience) contextLines.push(`- **Peptide Experience:** ${formData.peptideExperience}`)
+  if (formData.preferredRoutes?.length > 0) {
+    contextLines.push(`- **Preferred Routes:** ${formData.preferredRoutes.join(', ')}`)
+  }
+  if (formData.timeCommitment) contextLines.push(`- **Time Commitment:** ${formData.timeCommitment}`)
+  if (formData.previousPeptides) contextLines.push(`- **Previous Peptide Experience:** ${formData.previousPeptides}`)
+  if (formData.sleepQuality) contextLines.push(`- **Sleep Quality:** ${formData.sleepQuality}`)
+  if (formData.stressLevel) contextLines.push(`- **Stress Level:** ${formData.stressLevel}`)
+  if (formData.dietType) contextLines.push(`- **Diet Type:** ${formData.dietType}`)
+  if (formData.conditions) contextLines.push(`- **Medications/Conditions:** ${formData.conditions}`)
+  if (formData.supplements) contextLines.push(`- **Current Supplements/Peptides:** ${formData.supplements}`)
+  if (formData.geneticVariants) contextLines.push(`- **Known Genetic Variants:** ${formData.geneticVariants}`)
+  if (formData.healthHistory) contextLines.push(`- **Health History:** ${formData.healthHistory}`)
+
+  // Build bloodwork section
+  const bloodworkEntries = Object.entries(formData.bloodwork || {}).filter(([, v]) => v !== undefined && v !== null)
+  if (bloodworkEntries.length > 0) {
+    contextLines.push(`- **Bloodwork:**`)
+    for (const [key, value] of bloodworkEntries) {
+      contextLines.push(`  - ${key}: ${value}`)
+    }
   }
 
-  if (!body.profile) {
-    return false
-  }
-
-  const { age, weight, sex, experience } = body.profile
-
-  if (typeof age !== 'number' || age < 18 || age > 150) {
-    return false
-  }
-
-  if (typeof weight !== 'number' || weight < 40 || weight > 500) {
-    return false
-  }
-
-  if (sex !== 'male' && sex !== 'female') {
-    return false
-  }
-
-  if (!['beginner', 'intermediate', 'advanced'].includes(experience)) {
-    return false
-  }
-
-  return true
-}
-
-/**
- * System prompt for Claude
- */
-function getSystemPrompt(
-  userGoals: string[],
-  relevantCompounds: string[],
-  knowledgeBase: string,
-  userProfile: any,
-): string {
-  return `You are an expert peptide protocol advisor with deep knowledge of peptide biochemistry, clinical pharmacology, and personalized protocol design. You have access to a comprehensive knowledge base of peptide compounds and their mechanisms of action.
+  return `You are an expert peptide protocol advisor with deep knowledge of peptide biochemistry, clinical pharmacology, and personalized protocol design. You have access to a comprehensive knowledge base of peptide compounds.
 
 ## Your Role
 You create personalized, evidence-based peptide protocols tailored to individual goals, profile characteristics, and health status. You prioritize safety, efficacy, and evidence levels in all recommendations.
 
-## Important Context About User
-- **Goals:** ${userGoals.join(', ')}
-- **Age:** ${userProfile.age}
-- **Weight:** ${userProfile.weight} lbs
-- **Sex:** ${userProfile.sex}
-- **Experience Level:** ${userProfile.experience}
-${userProfile.advancedData?.medications?.length > 0 ? `- **Medications:** ${userProfile.advancedData.medications.join(', ')}` : ''}
-${userProfile.advancedData?.conditions?.length > 0 ? `- **Medical Conditions:** ${userProfile.advancedData.conditions.join(', ')}` : ''}
+## User Profile
+${contextLines.join('\n')}
 
-## Knowledge Base Reference
-The following compounds are particularly relevant to the user's goals:
-
+## Knowledge Base — Relevant Compounds
 ${getKnowledgeBaseForContext(relevantCompounds)}
 
-Full knowledge base available:
+## Full Knowledge Base
 ${knowledgeBase}
 
 ## Protocol Design Requirements
 
 1. **Compound Selection:**
-   - Select 3-6 compounds that synergize well for the stated goals
+   - Select compounds that synergize well for the stated goals
+   - If time commitment is "minimal", limit to 1-2 compounds; "moderate" = 3-5; "comprehensive" = full optimized stack
+   - Respect preferred administration routes when possible
+   - If user is a beginner ("never" or "some" experience), prioritize well-studied compounds with better safety profiles and use conservative doses
+   - For advanced users, can include more experimental compounds with appropriate caveats
    - Prioritize compounds with higher evidence levels
-   - Consider bioavailability, route of administration, and user experience level
-   - Flag any potential interactions with stated medications
+   - Flag any potential interactions with stated medications/conditions
 
 2. **Dosing Recommendations:**
    - Base doses on established research and clinical guidelines
-   - Adjust for user characteristics (age, weight, sex)
+   - Adjust for user characteristics (age, weight, sex) when available
+   - If bloodwork is provided, factor in relevant biomarker values
    - Provide dose ranges with clear recommendations
-   - Include frequency (daily, weekly, etc.) and timing
+   - Include frequency and timing
 
-3. **Evidence & Citations:**
-   - Rate each compound's evidence level (preclinical, animal model, pilot human study, clinical trial, approved pharmaceutical)
+3. **Lifestyle Integration:**
+   - If sleep quality is poor, consider compounds that may support sleep
+   - If stress is high, consider cortisol/adrenal support
+   - Adjust timing recommendations based on diet type (e.g., fasted protocols for IF users)
+   - Factor activity level into recovery and dosing recommendations
+
+4. **Evidence & Citations:**
+   - Rate each compound's evidence level
    - Explain the mechanism relevant to each goal
-   - Note any important limitations in current evidence
+   - Note limitations in current evidence
 
-4. **Safety & Monitoring:**
-   - Identify contraindications relevant to user's medications/conditions
-   - Recommend monitoring parameters (bloodwork, etc.)
-   - Include clear warnings about off-label use and risks
-   - For beginners: conservative doses and fewer compounds
+5. **Safety & Monitoring:**
+   - Identify contraindications based on stated conditions/medications
+   - Recommend monitoring parameters
+   - Include clear warnings about off-label use
 
-5. **Cycling & Administration:**
-   - Provide specific cycling protocols (on/off weeks)
-   - Include suggested weekly schedule with exact timing
-   - Consider compound interactions and spacing
-   - Note any need for washout periods
-
-6. **Synergies & Optimization:**
-   - Explain how compounds work together
-   - Note timing considerations for maximum synergy
-   - Include spacing requirements between doses
+6. **Cycling & Administration:**
+   - Provide specific cycling protocols
+   - Include suggested weekly schedule
+   - Note compound interactions and spacing
 
 ## Output Format
 
-Return ONLY valid JSON with this exact structure:
+Return ONLY valid JSON with this exact structure (no markdown code blocks, just the raw JSON):
 
-\`\`\`json
 {
   "title": "Personalized Protocol for [Goals]",
-  "overview": "Comprehensive explanation of protocol design, compounds selected, and expected outcomes (2-3 paragraphs)",
+  "overview": "Comprehensive explanation (2-3 paragraphs) of protocol design rationale, expected outcomes, and how it's tailored to this specific user",
   "compounds": [
     {
       "name": "Compound Name",
-      "purpose": "Why this compound for these goals",
-      "dose": "X-Y mcg or mg per injection/dose",
-      "route": "subcutaneous/intramuscular/oral/etc",
+      "purpose": "Why this compound for these goals and this user",
+      "dose": "X-Y mcg or mg per dose",
+      "route": "subcutaneous/oral/nasal/topical/etc",
       "frequency": "Once daily/3x weekly/etc",
-      "timing": "Morning/with food/between compounds/etc",
-      "cycle": "X weeks on, Y weeks off OR continuous per protocol",
+      "timing": "Morning/evening/with food/etc",
+      "cycle": "X weeks on, Y weeks off",
       "evidenceLevel": "preclinical/animal/pilot/clinical/approved",
-      "notes": "Additional considerations (interactions, side effects, monitoring needed, etc)"
+      "notes": "Side effects, monitoring needed, interactions"
     }
   ],
-  "weeklySchedule": "Detailed daily/weekly administration schedule as formatted text or table",
-  "cyclingProtocol": "Explanation of on/off cycles, breaks, and long-term management",
-  "importantWarnings": [
-    "Warning 1: specific contraindication or serious risk",
-    "Warning 2: interaction with stated medication",
-    "etc"
-  ],
-  "synergies": "Explanation of how compounds work together and timing for maximum effect",
-  "monitoring": "Recommended bloodwork, biomarkers, and timeline for monitoring",
-  "disclaimer": "Legal disclaimer about off-label use, FDA status, and recommendation to work with healthcare provider"
+  "weeklySchedule": "Detailed daily/weekly administration schedule",
+  "cyclingProtocol": "On/off cycles, breaks, long-term management",
+  "importantWarnings": ["Warning 1", "Warning 2"],
+  "synergies": "How compounds work together and timing for max effect",
+  "monitoring": "Recommended bloodwork and timeline for monitoring",
+  "disclaimer": "This protocol is for educational purposes only. All compounds discussed are research chemicals or used off-label. Consult a qualified healthcare provider before implementing any protocol. This does not constitute medical advice."
 }
-\`\`\`
 
 ## Critical Safety Notes
-- ALL peptides discussed are research chemicals or off-label uses (not FDA-approved for human use)
-- User must obtain through qualified sources
+- ALL peptides discussed are research chemicals or off-label uses
 - User should work with a knowledgeable healthcare provider
-- Clearly flag any contraindications based on stated conditions/medications
+- Clearly flag contraindications based on stated conditions/medications
 - For women: note pregnancy/lactation considerations
 - Include risk of adverse effects and monitoring parameters
 
 ## Tone
-Professional, evidence-based, cautious about limitations of evidence. Avoid overpromising results. Be specific about what evidence exists vs. theoretical benefits.`
+Professional, evidence-based, cautious about limitations. Avoid overpromising. Be specific about evidence vs. theoretical benefits.`
 }
 
 /**
@@ -203,22 +164,19 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
 
-    // Validate request
-    if (!validateRequest(body)) {
+    // Basic validation — only goals are required
+    if (!body.goals || !Array.isArray(body.goals) || body.goals.length === 0) {
       return NextResponse.json(
-        { error: 'Invalid request. Please provide goals, age, weight, sex, and experience level.' },
+        { error: 'Please select at least one goal.' },
         { status: 400 },
       )
     }
 
     const apiKey = process.env.ANTHROPIC_API_KEY
-
     if (!apiKey) {
       console.error('ANTHROPIC_API_KEY not configured')
       return NextResponse.json(
-        {
-          error: 'API configuration error. Please contact support. (Anthropic API key not configured)',
-        },
+        { error: 'API configuration error. The Anthropic API key is not configured. Please contact support.' },
         { status: 500 },
       )
     }
@@ -231,30 +189,25 @@ export async function POST(req: NextRequest) {
     const knowledgeBase = getKnowledgeBase()
 
     // Build system prompt
-    const systemPrompt = getSystemPrompt(body.goals, relevantCompounds, knowledgeBase, body)
+    const systemPrompt = getSystemPrompt(body, relevantCompounds, knowledgeBase)
 
     // Build user message
-    const userMessage = `Please create a personalized peptide protocol for a ${body.profile.age}-year-old ${body.profile.sex} weighing ${body.profile.weight} lbs with ${body.profile.experience} experience level.
+    const userParts: string[] = []
+    userParts.push(`Please create a personalized peptide protocol.`)
+    userParts.push(`\nGoals: ${body.goals.join(', ')}`)
 
-Goals: ${body.goals.join(', ')}
+    if (body.topPriorities?.length > 0) {
+      userParts.push(`Top priorities: ${body.topPriorities.join(', ')}`)
+    }
+    if (body.age) userParts.push(`Age: ${body.age}`)
+    if (body.biologicalSex) userParts.push(`Sex: ${body.biologicalSex}`)
+    if (body.weight) userParts.push(`Weight: ${body.weight} ${body.weightUnit || 'lbs'}`)
+    if (body.peptideExperience) userParts.push(`Experience: ${body.peptideExperience}`)
+    if (body.timeCommitment) userParts.push(`Time commitment: ${body.timeCommitment}`)
 
-${
-  (body.advancedData?.conditions?.length ?? 0) > 0
-    ? `Medical conditions to consider: ${body.advancedData!.conditions.join(', ')}`
-    : ''
-}
+    userParts.push(`\nCreate a comprehensive, personalized protocol based on the knowledge base provided. Focus on safety, synergy, and evidence-based recommendations. Return ONLY the JSON object, no markdown.`)
 
-${
-  (body.advancedData?.medications?.length ?? 0) > 0
-    ? `Current medications: ${body.advancedData!.medications.join(', ')}`
-    : ''
-}
-
-${
-  body.advancedData?.biomarkers ? `Current biomarkers: ${JSON.stringify(body.advancedData.biomarkers)}` : ''
-}
-
-Create a comprehensive, personalized protocol based on the knowledge base provided. Focus on safety, synergy, and evidence-based recommendations.`
+    const userMessage = userParts.join('\n')
 
     // Call Claude API
     const message = await client.messages.create({
@@ -278,12 +231,11 @@ Create a comprehensive, personalized protocol based on the knowledge base provid
     // Parse JSON response
     let protocol: GeneratedProtocol
     try {
-      // Extract JSON from response (in case Claude wraps it)
+      // Extract JSON from response (in case Claude wraps it in markdown)
       const jsonMatch = responseContent.text.match(/\{[\s\S]*\}/)
       if (!jsonMatch) {
         throw new Error('No JSON found in response')
       }
-
       protocol = JSON.parse(jsonMatch[0])
     } catch (parseError) {
       console.error('Error parsing Claude response:', responseContent.text)
@@ -304,18 +256,46 @@ Create a comprehensive, personalized protocol based on the knowledge base provid
       )
     }
 
-    return NextResponse.json(protocol, { status: 200 })
+    // Transform into the format the frontend expects
+    const frontendProtocol = {
+      title: protocol.title,
+      summary: protocol.overview,
+      sections: [
+        ...(protocol.compounds.length > 0 ? [{
+          heading: 'Recommended Compounds',
+          content: '',
+          subsections: protocol.compounds.map(c => ({
+            title: `${c.name} — ${c.purpose}`,
+            content: `<p><strong>Dose:</strong> ${c.dose} (${c.route})</p>
+<p><strong>Frequency:</strong> ${c.frequency} — ${c.timing}</p>
+<p><strong>Cycle:</strong> ${c.cycle}</p>
+<p><strong>Evidence Level:</strong> ${c.evidenceLevel}</p>
+${c.notes ? `<p><strong>Notes:</strong> ${c.notes}</p>` : ''}`
+          }))
+        }] : []),
+        { heading: 'Weekly Schedule', content: protocol.weeklySchedule.replace(/\n/g, '<br/>') },
+        { heading: 'Cycling Protocol', content: protocol.cyclingProtocol.replace(/\n/g, '<br/>') },
+        { heading: 'Synergies', content: protocol.synergies.replace(/\n/g, '<br/>') },
+        { heading: 'Monitoring', content: protocol.monitoring.replace(/\n/g, '<br/>') },
+        ...(protocol.importantWarnings.length > 0 ? [{
+          heading: 'Important Warnings',
+          content: protocol.importantWarnings.map(w => `<p>⚠️ ${w}</p>`).join('')
+        }] : []),
+      ],
+      disclaimer: protocol.disclaimer,
+    }
+
+    return NextResponse.json(frontendProtocol, { status: 200 })
   } catch (error) {
     console.error('Protocol generation error:', error)
 
     if (error instanceof Error) {
-      if (error.message.includes('API')) {
+      if (error.message.includes('API') || error.message.includes('authentication')) {
         return NextResponse.json(
           { error: 'API error. Please try again in a moment.' },
           { status: 503 },
         )
       }
-
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
