@@ -1,145 +1,37 @@
-import { readdirSync, readFileSync } from 'fs'
-import { join } from 'path'
+import { KNOWLEDGE_BASE_ENTRIES } from '@/data/knowledge-base-compiled'
 
-/**
- * Frontmatter type for knowledge base files
- */
-export interface KnowledgeBaseFrontmatter {
+interface KnowledgeBaseEntry {
   compound: string
-  aliases?: string[]
-  category?: string
-  routes?: string[]
-  dose_range_mcg?: [number, number]
-  typical_dose_mcg?: number
-  cycle_weeks?: [number, number]
-  contraindications?: string[]
-  synergies?: string[]
-  evidence_level?: string
-  last_updated?: string
-  [key: string]: any
-}
-
-/**
- * Parsed knowledge base entry
- */
-export interface KnowledgeBaseEntry {
-  compound: string
-  frontmatter: KnowledgeBaseFrontmatter
+  frontmatter: Record<string, any>
   content: string
 }
 
+export type { KnowledgeBaseEntry }
+
 /**
  * Goal-to-compounds mapping
+ * Keys must match what the frontend sends (e.g., "Fat Loss", "Muscle Growth")
  */
 const GOAL_TO_COMPOUNDS: Record<string, string[]> = {
-  'fat-loss': ['Retatrutide', 'CJC-1295', 'Ipamorelin', 'Tesamorelin', '5-Amino-1MQ', 'MOTS-C', 'SLU-PP-332', 'L-Carnitine'],
-  'muscle-growth': ['CJC-1295', 'Ipamorelin', 'Tesamorelin', 'BPC-157', 'TB-500'],
-  'gut-health': ['BPC-157', 'KPV', 'Larazotide', 'GHK-Cu'],
-  'anti-inflammation': ['BPC-157', 'KPV', 'GHK-Cu', 'TB-500', 'SS-31'],
-  'longevity': ['Epithalon', 'FOXO4-DRI', 'NAD+', 'SS-31', 'MOTS-C', 'Pinealon'],
-  'cognitive': ['Pinealon', 'NAD+', 'SS-31', 'GHK-Cu'],
-  'sleep': ['CJC-1295', 'Ipamorelin', 'Pinealon'],
-  'injury-recovery': ['BPC-157', 'TB-500', 'GHK-Cu'],
-  'hormone-optimization': ['CJC-1295', 'Ipamorelin', 'Tesamorelin', 'Tadalafil'],
-  'energy': ['SS-31', 'MOTS-C', 'NAD+', '5-Amino-1MQ', 'Creatine'],
-  'skin-hair': ['GHK-Cu', 'BPC-157', 'Epithalon'],
-  'immune-support': ['TB-500', 'KPV', 'BPC-157'],
-}
-
-/**
- * Parse YAML/JSON frontmatter from markdown file
- */
-function parseFrontmatter(content: string): {
-  frontmatter: KnowledgeBaseFrontmatter
-  markdown: string
-} {
-  const frontmatterRegex = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/
-  const match = content.match(frontmatterRegex)
-
-  if (!match) {
-    return { frontmatter: { compound: 'Unknown' }, markdown: content }
-  }
-
-  const [, frontmatterStr, markdown] = match
-  const frontmatter: KnowledgeBaseFrontmatter = { compound: 'Unknown' }
-
-  // Simple YAML parser for our format
-  const lines = frontmatterStr.split('\n')
-  for (const line of lines) {
-    if (!line.trim() || line.trim().startsWith('#')) continue
-
-    const [key, ...valueParts] = line.split(':')
-    const cleanKey = key.trim()
-    let value = valueParts.join(':').trim()
-
-    // Remove quotes
-    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
-      value = value.slice(1, -1)
-    }
-
-    // Parse arrays
-    if (value.startsWith('[') && value.endsWith(']')) {
-      try {
-        frontmatter[cleanKey] = JSON.parse(value)
-      } catch {
-        frontmatter[cleanKey] = value
-      }
-    }
-    // Parse numbers
-    else if (!isNaN(Number(value)) && value !== '') {
-      frontmatter[cleanKey] = Number(value)
-    }
-    // Parse booleans
-    else if (value === 'true' || value === 'false') {
-      frontmatter[cleanKey] = value === 'true'
-    }
-    // String values
-    else {
-      frontmatter[cleanKey] = value
-    }
-  }
-
-  return { frontmatter, markdown }
-}
-
-/**
- * Load all knowledge base entries from disk
- */
-function loadAllEntries(): KnowledgeBaseEntry[] {
-  const kbDir = join(process.cwd(), 'src', 'data', 'knowledge-base')
-
-  try {
-    const files = readdirSync(kbDir).filter((f) => f.endsWith('.md'))
-    const entries: KnowledgeBaseEntry[] = []
-
-    for (const file of files) {
-      try {
-        const filePath = join(kbDir, file)
-        const fileContent = readFileSync(filePath, 'utf-8')
-        const { frontmatter, markdown } = parseFrontmatter(fileContent)
-
-        entries.push({
-          compound: frontmatter.compound || file.replace('.md', ''),
-          frontmatter,
-          content: markdown,
-        })
-      } catch (error) {
-        console.error(`Error loading knowledge base file ${file}:`, error)
-      }
-    }
-
-    return entries
-  } catch (error) {
-    console.error('Error loading knowledge base directory:', error)
-    return []
-  }
+  'Fat Loss': ['Retatrutide', 'CJC-1295', 'Ipamorelin', 'Tesamorelin', '5-Amino-1MQ', 'MOTS-C', 'SLU-PP-332'],
+  'Muscle Growth': ['CJC-1295', 'Ipamorelin', 'Tesamorelin', 'BPC-157', 'TB-500'],
+  'Gut Health': ['BPC-157', 'KPV', 'Larazotide', 'GHK-Cu'],
+  'Anti-Inflammation': ['BPC-157', 'KPV', 'GHK-Cu', 'TB-500', 'SS-31'],
+  'Longevity/Anti-Aging': ['Epithalon', 'FOXO4-DRI', 'NAD+', 'SS-31', 'MOTS-C', 'Pinealon'],
+  'Cognitive Performance': ['Pinealon', 'NAD+', 'SS-31', 'GHK-Cu'],
+  'Sleep Quality': ['CJC-1295', 'Ipamorelin', 'Pinealon'],
+  'Injury Recovery': ['BPC-157', 'TB-500', 'GHK-Cu'],
+  'Hormone Optimization': ['CJC-1295', 'Ipamorelin', 'Tesamorelin', 'Tadalafil'],
+  'Energy/Mitochondrial Health': ['SS-31', 'MOTS-C', 'NAD+', '5-Amino-1MQ'],
+  'Skin/Hair': ['GHK-Cu', 'BPC-157', 'Epithalon'],
+  'Immune Support': ['TB-500', 'KPV', 'BPC-157'],
 }
 
 /**
  * Get the full knowledge base formatted for a system prompt
  */
 export function getKnowledgeBase(): string {
-  const entries = loadAllEntries()
+  const entries = KNOWLEDGE_BASE_ENTRIES
 
   if (entries.length === 0) {
     return 'Knowledge base not available. Please ensure markdown files exist in src/data/knowledge-base/'
@@ -202,11 +94,19 @@ export function getCompoundsByGoals(goals: string[]): string[] {
   const compoundSet = new Set<string>()
 
   for (const goal of goals) {
-    const normalized = goal.toLowerCase().replace(/\s+/g, '-')
-    const compounds = GOAL_TO_COMPOUNDS[normalized] || []
+    // Try exact match first
+    let compounds = GOAL_TO_COMPOUNDS[goal]
 
-    for (const compound of compounds) {
-      compoundSet.add(compound)
+    // Fallback: try lowercase slug format for backwards compatibility
+    if (!compounds) {
+      const normalized = goal.toLowerCase().replace(/\s+/g, '-')
+      compounds = GOAL_TO_COMPOUNDS[normalized]
+    }
+
+    if (compounds) {
+      for (const compound of compounds) {
+        compoundSet.add(compound)
+      }
     }
   }
 
@@ -217,10 +117,9 @@ export function getCompoundsByGoals(goals: string[]): string[] {
  * Get knowledge base entries for specific compounds
  */
 export function getCompoundDocs(compoundNames: string[]): KnowledgeBaseEntry[] {
-  const entries = loadAllEntries()
   const normalized = new Set(compoundNames.map((n) => n.toLowerCase()))
 
-  return entries.filter(
+  return KNOWLEDGE_BASE_ENTRIES.filter(
     (entry) =>
       normalized.has(entry.compound.toLowerCase()) ||
       (entry.frontmatter.aliases &&
@@ -232,14 +131,14 @@ export function getCompoundDocs(compoundNames: string[]): KnowledgeBaseEntry[] {
  * Get knowledge base entries as structured data
  */
 export function getKnowledgeBaseEntries(): KnowledgeBaseEntry[] {
-  return loadAllEntries()
+  return KNOWLEDGE_BASE_ENTRIES
 }
 
 /**
  * Format knowledge base for API context (condensed version)
  */
 export function getKnowledgeBaseForContext(compoundNames?: string[]): string {
-  const entries = compoundNames ? getCompoundDocs(compoundNames) : loadAllEntries()
+  const entries = compoundNames ? getCompoundDocs(compoundNames) : KNOWLEDGE_BASE_ENTRIES
 
   if (entries.length === 0) {
     return 'No knowledge base entries found.'
