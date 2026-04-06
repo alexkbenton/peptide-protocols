@@ -232,18 +232,22 @@ export default function ProtocolWizard() {
 
   const handleGenerateProtocol = async () => {
     dispatch({ type: 'SET_STEP', payload: 'loading' })
+    dispatch({ type: 'SET_ERROR', payload: '' })
     try {
       const response = await fetch('/api/generate-protocol', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(state.formData),
       })
-      if (!response.ok) throw new Error('Failed to generate protocol')
-      const protocol = await response.json()
-      dispatch({ type: 'SET_PROTOCOL', payload: protocol })
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate protocol')
+      }
+      dispatch({ type: 'SET_PROTOCOL', payload: data })
       dispatch({ type: 'SET_STEP', payload: 'results' })
     } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: 'Failed to generate protocol. Please try again.' })
+      const msg = error instanceof Error ? error.message : 'Failed to generate protocol'
+      dispatch({ type: 'SET_ERROR', payload: msg })
       dispatch({ type: 'SET_STEP', payload: 'review' })
     }
   }
@@ -979,69 +983,86 @@ export default function ProtocolWizard() {
         {/* Step 8: Review & Generate */}
         {state.currentStep === 'review' && (
           <div className="animate-fade-in-up">
-            <h1 className="font-display text-4xl text-sage-900 mb-2">Review & Generate</h1>
-            <p className="text-body text-gray-600 mb-8">Ready to generate your personalized protocol?</p>
+            <h1 className="font-display text-4xl text-sage-900 mb-2">Ready to Generate</h1>
+            <p className="text-body text-gray-600 mb-8">Here&apos;s a summary of what you&apos;ve told us. Hit generate when you&apos;re ready!</p>
 
             <div className="space-y-8">
-              {/* Email Field */}
-              <div className="card bg-white p-8">
-                <h2 className="heading-section mb-4">Your Email</h2>
-                <p className="text-body text-gray-600 mb-4">Optional — enter your email to receive a copy of your protocol.</p>
-                <input
-                  type="email"
-                  value={state.formData.email || ''}
-                  onChange={(e) => dispatch({ type: 'UPDATE_FORM', payload: { email: e.target.value || undefined } })}
-                  placeholder="your@email.com"
-                  className="w-full px-4 py-3 border border-sage-200 rounded-lg font-sans text-gray-700 placeholder-gray-400 focus:outline-none focus:border-sage-600 focus:ring-1 focus:ring-sage-600"
-                />
-              </div>
-
               {/* Summary */}
-              <details className="card bg-white p-8">
-                <summary className="cursor-pointer font-semibold text-gray-900 text-lg flex items-center gap-2">
-                  <span>▶</span> View Summary of Your Answers
-                </summary>
-                <div className="mt-6 space-y-4 text-body text-gray-700">
-                  <div>
-                    <p className="font-semibold">Goals:</p>
-                    <p>{state.formData.goals.join(', ') || 'None selected'}</p>
-                  </div>
-                  {state.formData.topPriorities.length > 0 && (
-                    <div>
-                      <p className="font-semibold">Top Priorities:</p>
-                      <p>{state.formData.topPriorities.join(', ')}</p>
-                    </div>
-                  )}
-                  <div>
-                    <p className="font-semibold">Experience Level:</p>
-                    <p>{state.formData.peptideExperience || 'Not specified'}</p>
-                  </div>
-                  <div>
-                    <p className="font-semibold">Preferred Routes:</p>
-                    <p>{state.formData.preferredRoutes.join(', ') || 'Not specified'}</p>
-                  </div>
-                  <div>
-                    <p className="font-semibold">Sleep Quality:</p>
-                    <p>{state.formData.sleepQuality || 'Not specified'}</p>
-                  </div>
-                  <div>
-                    <p className="font-semibold">Stress Level:</p>
-                    <p>{state.formData.stressLevel || 'Not specified'}</p>
-                  </div>
-                  <div>
-                    <p className="font-semibold">Diet Type:</p>
-                    <p>{state.formData.dietType || 'Not specified'}</p>
-                  </div>
+              <div className="card bg-white p-8 space-y-4 text-body text-gray-700">
+                <div>
+                  <p className="font-semibold text-warm-900">Goals:</p>
+                  <p>{state.formData.goals.join(', ')}</p>
                 </div>
-              </details>
+                {state.formData.topPriorities.length > 0 && (
+                  <div>
+                    <p className="font-semibold text-warm-900">Top Priorities:</p>
+                    <p>{state.formData.topPriorities.join(', ')}</p>
+                  </div>
+                )}
+                {state.formData.peptideExperience && (
+                  <div>
+                    <p className="font-semibold text-warm-900">Experience:</p>
+                    <p>{state.formData.peptideExperience}</p>
+                  </div>
+                )}
+                {state.formData.preferredRoutes.length > 0 && (
+                  <div>
+                    <p className="font-semibold text-warm-900">Preferred Routes:</p>
+                    <p>{state.formData.preferredRoutes.join(', ')}</p>
+                  </div>
+                )}
+                {state.formData.timeCommitment && (
+                  <div>
+                    <p className="font-semibold text-warm-900">Time Commitment:</p>
+                    <p>{state.formData.timeCommitment}</p>
+                  </div>
+                )}
+                {(state.formData.sleepQuality || state.formData.stressLevel || state.formData.dietType) && (
+                  <div>
+                    <p className="font-semibold text-warm-900">Lifestyle:</p>
+                    <p>
+                      {[
+                        state.formData.sleepQuality && `Sleep: ${state.formData.sleepQuality}`,
+                        state.formData.stressLevel && `Stress: ${state.formData.stressLevel}`,
+                        state.formData.dietType && `Diet: ${state.formData.dietType}`,
+                      ].filter(Boolean).join(' · ')}
+                    </p>
+                  </div>
+                )}
+                {(state.formData.age || state.formData.biologicalSex || state.formData.weight) && (
+                  <div>
+                    <p className="font-semibold text-warm-900">Profile:</p>
+                    <p>
+                      {[
+                        state.formData.age && `Age ${state.formData.age}`,
+                        state.formData.biologicalSex,
+                        state.formData.weight && `${state.formData.weight} ${state.formData.weightUnit}`,
+                        state.formData.activityLevel,
+                      ].filter(Boolean).join(' · ')}
+                    </p>
+                  </div>
+                )}
+                {Object.values(state.formData.bloodwork).some(v => v !== undefined) && (
+                  <div>
+                    <p className="font-semibold text-warm-900">Bloodwork:</p>
+                    <p>{Object.entries(state.formData.bloodwork).filter(([,v]) => v !== undefined).length} markers provided</p>
+                  </div>
+                )}
+              </div>
 
               {/* Privacy Note */}
               <div className="bg-sage-50 border border-sage-200 rounded-lg p-6 flex gap-4">
                 <CheckCircle className="w-5 h-5 text-sage-600 flex-shrink-0 mt-0.5" />
                 <p className="text-body text-gray-700">
-                  <strong>Privacy:</strong> Your data is processed in real-time and never stored on our servers. All information is used solely to generate your personalized protocol.
+                  <strong>Privacy:</strong> Your data is processed in real-time and never stored. All information is used solely to generate your protocol.
                 </p>
               </div>
+
+              {state.error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-red-700 text-body">
+                  {state.error}
+                </div>
+              )}
             </div>
 
             <div className="mt-8 flex justify-between gap-4">
@@ -1054,7 +1075,7 @@ export default function ProtocolWizard() {
               </button>
               <button
                 onClick={handleGenerateProtocol}
-                className="btn-primary text-lg px-8 py-4 flex items-center gap-2"
+                className="btn-primary text-lg px-10 py-4 flex items-center gap-2"
               >
                 Generate My Protocol
                 <ChevronRight className="w-5 h-5" />
@@ -1089,20 +1110,29 @@ export default function ProtocolWizard() {
         {/* Step 10: Results */}
         {state.currentStep === 'results' && state.protocol && (
           <div className="animate-fade-in-up">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-sage-100 mb-4">
+                <CheckCircle className="w-8 h-8 text-sage-600" />
+              </div>
+              <h1 className="font-display text-4xl text-sage-900 mb-2">Your Protocol is Ready</h1>
+            </div>
+
             <div className="card bg-white p-8 mb-8">
-              <h1 className="font-display text-4xl text-sage-900 mb-2">{state.protocol.title}</h1>
+              <h2 className="font-display text-2xl text-sage-900 mb-2">{state.protocol.title}</h2>
               <p className="text-body text-gray-600 mb-6">{state.protocol.summary}</p>
 
               {state.protocol.sections.map((section, idx) => (
-                <div key={idx} className="mb-8">
-                  <h2 className="heading-section mb-4">{section.heading}</h2>
-                  <p className="text-body text-gray-700 mb-4">{section.content}</p>
+                <div key={idx} className="mb-8 last:mb-0">
+                  <h3 className="heading-section mb-4 border-b border-warm-200 pb-2">{section.heading}</h3>
+                  {section.content && (
+                    <div className="text-body text-gray-700 mb-4" dangerouslySetInnerHTML={{ __html: section.content }} />
+                  )}
                   {section.subsections && (
                     <div className="space-y-4">
                       {section.subsections.map((sub, subIdx) => (
-                        <div key={subIdx} className="bg-sage-50 p-4 rounded-lg">
-                          <h3 className="font-semibold text-gray-900 mb-2">{sub.title}</h3>
-                          <p className="text-body text-gray-700">{sub.content}</p>
+                        <div key={subIdx} className="bg-sage-50 border-l-4 border-sage-400 p-5 rounded-r-lg">
+                          <h4 className="font-semibold text-warm-900 mb-2">{sub.title}</h4>
+                          <div className="text-sm text-warm-800 space-y-1" dangerouslySetInnerHTML={{ __html: sub.content }} />
                         </div>
                       ))}
                     </div>
@@ -1110,29 +1140,44 @@ export default function ProtocolWizard() {
                 </div>
               ))}
 
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mt-8">
-                <p className="text-body text-gray-700">{state.protocol.disclaimer}</p>
+              <div className="bg-sand-50 border border-sand-200 rounded-lg p-6 mt-8">
+                <p className="font-semibold text-warm-900 mb-1">Important Disclaimer</p>
+                <p className="text-sm text-warm-700">{state.protocol.disclaimer}</p>
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+            {/* Primary Action: Download */}
+            <div className="flex flex-col gap-4 mb-8">
               <button
                 onClick={handleDownloadPDF}
-                className="btn-primary flex-1 flex items-center justify-center gap-2 text-lg py-4"
+                className="btn-primary w-full flex items-center justify-center gap-2 text-lg py-4"
               >
                 <Download className="w-5 h-5" />
                 Download Protocol
               </button>
-              {state.formData.email && (
+            </div>
+
+            {/* Email Option — shown after protocol */}
+            <div className="card bg-white p-6 mb-8">
+              <h3 className="font-semibold text-warm-900 mb-2">Want a copy emailed to you?</h3>
+              <div className="flex gap-3">
+                <input
+                  type="email"
+                  value={state.formData.email || ''}
+                  onChange={(e) => dispatch({ type: 'UPDATE_FORM', payload: { email: e.target.value || undefined } })}
+                  placeholder="your@email.com"
+                  className="flex-1 px-4 py-3 border border-warm-200 rounded-lg font-sans text-gray-700 placeholder-gray-400 focus:outline-none focus:border-sage-600 focus:ring-1 focus:ring-sage-600"
+                />
                 <button
                   onClick={handleEmailProtocol}
-                  className="btn-secondary flex-1 flex items-center justify-center gap-2 text-lg py-4"
+                  disabled={!state.formData.email}
+                  className="btn-secondary flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  <Mail className="w-5 h-5" />
-                  Email Me This
+                  <Mail className="w-4 h-4" />
+                  Send
                 </button>
-              )}
+              </div>
+              <p className="text-xs text-warm-500 mt-2">We&apos;ll send your protocol and never spam you.</p>
             </div>
 
             <div className="text-center">
