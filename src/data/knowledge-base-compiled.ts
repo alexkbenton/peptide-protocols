@@ -1,29 +1,13 @@
 // AUTO-GENERATED - Do not edit manually
 // Run: node scripts/compile-knowledge-base.js to regenerate
 
-export interface KnowledgeBaseFrontmatter {
-  compound: string
-  aliases?: string[]
-  category?: string
-  routes?: string[]
-  dose_range_mcg?: [number, number]
-  typical_dose_mcg?: number
-  cycle_weeks?: [number, number]
-  contraindications?: string[]
-  synergies?: string[]
-  evidence_level?: string
-  last_updated?: string
-  [key: string]: any
-}
-
 export interface KnowledgeBaseEntry {
   compound: string
-  frontmatter: KnowledgeBaseFrontmatter
+  frontmatter: Record<string, any>
   content: string
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const KNOWLEDGE_BASE_ENTRIES: Array<{ compound: string; frontmatter: Record<string, any>; content: string }> = [
+export const KNOWLEDGE_BASE_ENTRIES: KnowledgeBaseEntry[] = [
   {
     "compound": "5-Amino-1MQ",
     "frontmatter": {
