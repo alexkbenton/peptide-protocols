@@ -8,6 +8,13 @@ interface KnowledgeBaseEntry {
 
 export type { KnowledgeBaseEntry }
 
+// Helper: safely join a value that might be a string instead of an array
+function safeJoin(val: any, sep: string): string {
+  if (Array.isArray(val)) return val.join(sep)
+  if (typeof val === 'string') return val
+  return String(val)
+}
+
 /**
  * Goal-to-compounds mapping
  * Keys must match what the frontend sends (e.g., "Fat Loss", "Muscle Growth")
@@ -50,7 +57,7 @@ export function getKnowledgeBase(): string {
     }
 
     if (entry.frontmatter.aliases && entry.frontmatter.aliases.length > 0) {
-      formatted += `**Also Known As:** ${entry.frontmatter.aliases.join(', ')}\n\n`
+      formatted += `**Also Known As:** ${safeJoin(entry.frontmatter.aliases, ', ')}\n\n`
     }
 
     if (entry.frontmatter.typical_dose_mcg) {
@@ -61,7 +68,7 @@ export function getKnowledgeBase(): string {
       formatted += `**Dose Range:** ${min}-${max} mcg\n`
     }
     if (entry.frontmatter.routes && entry.frontmatter.routes.length > 0) {
-      formatted += `**Routes:** ${entry.frontmatter.routes.join(', ')}\n`
+      formatted += `**Routes:** ${safeJoin(entry.frontmatter.routes, ', ')}\n`
     }
     if (entry.frontmatter.cycle_weeks) {
       const [min, max] = entry.frontmatter.cycle_weeks
@@ -72,11 +79,11 @@ export function getKnowledgeBase(): string {
     }
 
     if (entry.frontmatter.contraindications && entry.frontmatter.contraindications.length > 0) {
-      formatted += `**Contraindications:** ${entry.frontmatter.contraindications.join('; ')}\n`
+      formatted += `**Contraindications:** ${safeJoin(entry.frontmatter.contraindications, '; ')}\n`
     }
 
     if (entry.frontmatter.synergies && entry.frontmatter.synergies.length > 0) {
-      formatted += `**Synergies:** Works well with ${entry.frontmatter.synergies.join(', ')}\n`
+      formatted += `**Synergies:** Works well with ${safeJoin(entry.frontmatter.synergies, ', ')}\n`
     }
 
     formatted += '\n'
@@ -158,13 +165,13 @@ export function getKnowledgeBaseForContext(compoundNames?: string[]): string {
       formatted += `**Range:** ${min}-${max} mcg\n`
     }
     if (entry.frontmatter.routes) {
-      formatted += `**Routes:** ${entry.frontmatter.routes.join(', ')}\n`
+      formatted += `**Routes:** ${safeJoin(entry.frontmatter.routes, ', ')}\n`
     }
     if (entry.frontmatter.evidence_level) {
       formatted += `**Evidence:** ${entry.frontmatter.evidence_level}\n`
     }
     if (entry.frontmatter.contraindications && entry.frontmatter.contraindications.length > 0) {
-      formatted += `**Cautions:** ${entry.frontmatter.contraindications.join('; ')}\n`
+      formatted += `**Cautions:** ${safeJoin(entry.frontmatter.contraindications, '; ')}\n`
     }
 
     // Include first 300 chars of content
