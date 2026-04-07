@@ -20,7 +20,7 @@ function safeJoin(val: any, sep: string): string {
  * Keys must match what the frontend sends (e.g., "Fat Loss", "Muscle Growth")
  */
 const GOAL_TO_COMPOUNDS: Record<string, string[]> = {
-  'Fat Loss': ['Retatrutide', 'CJC-1295', 'Ipamorelin', 'Tesamorelin', '5-Amino-1MQ', 'MOTS-C', 'SLU-PP-332'],
+  'Fat Loss': ['Retatrutide', 'Tirzepatide', 'CJC-1295', 'Ipamorelin', 'Tesamorelin', '5-Amino-1MQ', 'MOTS-C', 'SLU-PP-332'],
   'Muscle Growth': ['CJC-1295', 'Ipamorelin', 'Tesamorelin', 'BPC-157', 'TB-500'],
   'Gut Health': ['BPC-157', 'KPV', 'Larazotide', 'GHK-Cu'],
   'Anti-Inflammation': ['BPC-157', 'KPV', 'GHK-Cu', 'TB-500', 'SS-31'],
@@ -28,7 +28,7 @@ const GOAL_TO_COMPOUNDS: Record<string, string[]> = {
   'Cognitive Performance': ['Pinealon', 'NAD+', 'SS-31', 'GHK-Cu'],
   'Sleep Quality': ['CJC-1295', 'Ipamorelin', 'Pinealon'],
   'Injury Recovery': ['BPC-157', 'TB-500', 'GHK-Cu'],
-  'Hormone Optimization': ['CJC-1295', 'Ipamorelin', 'Tesamorelin', 'Tadalafil'],
+  'Hormone Optimization': ['CJC-1295', 'Ipamorelin', 'Tesamorelin', 'Tirzepatide', 'Tadalafil'],
   'Energy/Mitochondrial Health': ['SS-31', 'MOTS-C', 'NAD+', '5-Amino-1MQ'],
   'Skin/Hair': ['GHK-Cu', 'BPC-157', 'Epithalon'],
   'Immune Support': ['TB-500', 'KPV', 'BPC-157'],

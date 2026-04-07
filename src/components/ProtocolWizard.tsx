@@ -265,7 +265,7 @@ export default function ProtocolWizard() {
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = 'protocol.pdf'
+      a.download = 'my-peptide-protocol.html'
       a.click()
       window.URL.revokeObjectURL(url)
     } catch (error) {
