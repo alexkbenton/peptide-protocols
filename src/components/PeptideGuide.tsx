@@ -399,19 +399,22 @@ export default function PeptideGuide() {
               </h3>
               <p className="text-sm text-warm-800/80 leading-relaxed mb-6">
                 Rotating injection sites prevents lipohypertrophy (localized fat thickening) and
-                ensures consistent absorption. Use at least 8 different sites, spacing them at
-                least 1 inch apart. Recommended sites include lower abdomen, outer thighs, upper
-                outer glutes, and back of upper arms.
+                ensures consistent absorption. Space injections at least 1 inch apart.
+                Recommended sites include the deltoid, abdomen, outer quad, lat, and gluteus medius.
               </p>
 
-              {/* Injection site diagram placeholder - image coming soon */}
-              <div className="border-2 border-dashed border-warm-300 rounded-xl p-8 flex flex-col items-center justify-center bg-white/50">
-                <p className="text-sm font-medium text-warm-900 mb-2">Injection Site Diagram</p>
-                <p className="text-xs text-warm-800/60">Visual guide coming soon</p>
+              {/* Anatomical Injection Site Diagram */}
+              <div className="rounded-xl overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/injection-sites.png"
+                  alt="Front and back anatomical diagram showing five subcutaneous injection sites: Deltoid, Abdomen, Outer Quad, Lat, and Gluteus Medius"
+                  className="w-full rounded-xl"
+                />
               </div>
 
               <p className="text-xs text-warm-800/60 mt-4 text-center">
-                Recommended sites: Deltoid, Lower Abdomen, Upper Glute, and Outer Thigh — rotate between them
+                Rotate between all injection sites to prevent tissue buildup
               </p>
             </div>
 
