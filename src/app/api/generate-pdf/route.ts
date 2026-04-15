@@ -1,298 +1,310 @@
 import { NextRequest, NextResponse } from 'next/server'
+import PDFDocument from 'pdfkit'
+
+// Brand colors
+const SAGE = '#47684b'
+const SAGE_LIGHT = '#5c8160'
+const WARM_BG = '#faf8f5'
+const TEXT_DARK = '#2a241c'
+const TEXT_MED = '#555555'
+const BORDER_LIGHT = '#e0d0bc'
 
 /**
- * Generate a print-optimized HTML version of the protocol
- * Accepts the ProtocolResult format from the wizard:
- * { title, summary, sections: [{ heading, content, subsections? }], disclaimer }
+ * Strip basic HTML tags from content for clean PDF text
  */
-function generateHTMLProtocol(protocol: any): string {
-  const generatedDate = new Date().toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
+function stripHtml(text: string): string {
+  return text
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>\s*<p>/gi, '\n\n')
+    .replace(/<p>/gi, '')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<strong>(.*?)<\/strong>/gi, '$1')
+    .replace(/<em>(.*?)<\/em>/gi, '$1')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/⚠️/g, '!')
+    .trim()
+}
 
-  // Build sections HTML
-  const sectionsHTML = (protocol.sections || [])
-    .map((section: any) => {
-      let html = `
-    <section>
-      <h2>${escapeHtml(section.heading)}</h2>
-      <div class="section-content">${formatContent(section.content)}</div>`
+/**
+ * Check if we need a new page and add one if so
+ */
+function ensureSpace(doc: any, needed: number) {
+  const pageHeight = doc.page.height
+  const bottomMargin = 60
+  if (doc.y + needed > pageHeight - bottomMargin) {
+    doc.addPage()
+  }
+}
 
-      if (section.subsections && section.subsections.length > 0) {
-        for (const sub of section.subsections) {
-          html += `
-      <div class="subsection">
-        <h3>${escapeHtml(sub.title)}</h3>
-        <div class="section-content">${formatContent(sub.content)}</div>
-      </div>`
+/**
+ * Draw page footer
+ */
+function drawFooter(doc: any, pageNum: number) {
+  const bottom = doc.page.height - 30
+  doc
+    .fontSize(8)
+    .fillColor('#999999')
+    .text(
+      `Peptide Protocols • peptideprotocols.us • For educational purposes only • Page ${pageNum}`,
+      50,
+      bottom,
+      { align: 'center', width: doc.page.width - 100 },
+    )
+}
+
+/**
+ * Generate PDF from protocol data
+ */
+function generatePDF(protocol: any): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument({
+        size: 'letter',
+        margins: { top: 50, bottom: 60, left: 55, right: 55 },
+        bufferPages: true,
+        info: {
+          Title: protocol.title || 'Peptide Protocol',
+          Author: 'Peptide Protocols',
+          Subject: 'Personalized Peptide Protocol',
+          Creator: 'peptideprotocols.us',
+        },
+      })
+
+      const chunks: Buffer[] = []
+      doc.on('data', (chunk: Buffer) => chunks.push(chunk))
+      doc.on('end', () => resolve(Buffer.concat(chunks)))
+      doc.on('error', reject)
+
+      const pageWidth = doc.page.width - 110 // margins
+
+      // ============================================
+      // HEADER
+      // ============================================
+
+      // Sage green header bar
+      doc
+        .rect(0, 0, doc.page.width, 4)
+        .fill(SAGE)
+
+      doc.moveDown(0.5)
+
+      // Title
+      doc
+        .fontSize(24)
+        .fillColor(SAGE)
+        .text(protocol.title || 'Your Personalized Protocol', { align: 'left' })
+
+      doc.moveDown(0.3)
+
+      // Date and branding
+      const generatedDate = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+      doc
+        .fontSize(10)
+        .fillColor(TEXT_MED)
+        .text(`Generated on ${generatedDate}`, { continued: true })
+        .text('  •  peptideprotocols.us', { link: 'https://peptideprotocols.us' })
+
+      doc.moveDown(0.5)
+
+      // Divider line
+      doc
+        .moveTo(55, doc.y)
+        .lineTo(doc.page.width - 55, doc.y)
+        .strokeColor(SAGE)
+        .lineWidth(2)
+        .stroke()
+
+      doc.moveDown(1)
+
+      // ============================================
+      // OVERVIEW / SUMMARY
+      // ============================================
+      if (protocol.summary) {
+        ensureSpace(doc, 100)
+
+        const summaryText = stripHtml(protocol.summary)
+
+        // Light background box for overview
+        const summaryStartY = doc.y
+        // First measure the text height
+        doc.fontSize(11)
+        const tempHeight = doc.heightOfString(summaryText, {
+          width: pageWidth - 30,
+        })
+
+        doc
+          .rect(55, summaryStartY - 5, pageWidth, tempHeight + 35)
+          .fill(WARM_BG)
+
+        // Left accent bar
+        doc
+          .rect(55, summaryStartY - 5, 4, tempHeight + 35)
+          .fill(SAGE)
+
+        doc
+          .fontSize(14)
+          .fillColor(SAGE)
+          .text('Protocol Overview', 70, summaryStartY + 5, { width: pageWidth - 30 })
+
+        doc.moveDown(0.3)
+
+        doc
+          .fontSize(11)
+          .fillColor(TEXT_DARK)
+          .text(summaryText, 70, doc.y, { width: pageWidth - 30, lineGap: 3 })
+
+        doc.y = summaryStartY + tempHeight + 40
+        doc.moveDown(0.8)
+      }
+
+      // ============================================
+      // SECTIONS
+      // ============================================
+      if (protocol.sections && Array.isArray(protocol.sections)) {
+        for (const section of protocol.sections) {
+          ensureSpace(doc, 80)
+
+          // Section heading with left bar
+          const headingY = doc.y
+          doc
+            .rect(55, headingY, 4, 22)
+            .fill(SAGE)
+
+          doc
+            .fontSize(16)
+            .fillColor(SAGE)
+            .text(section.heading, 68, headingY + 2, { width: pageWidth - 20 })
+
+          doc.moveDown(0.5)
+
+          // Section content
+          if (section.content) {
+            const contentText = stripHtml(section.content)
+            if (contentText) {
+              ensureSpace(doc, 40)
+              doc
+                .fontSize(10.5)
+                .fillColor(TEXT_DARK)
+                .text(contentText, 55, doc.y, { width: pageWidth, lineGap: 2.5 })
+              doc.moveDown(0.5)
+            }
+          }
+
+          // Subsections
+          if (section.subsections && Array.isArray(section.subsections)) {
+            for (const sub of section.subsections) {
+              ensureSpace(doc, 60)
+
+              // Subsection title
+              doc
+                .fontSize(12)
+                .fillColor(SAGE_LIGHT)
+                .text(stripHtml(sub.title), 62, doc.y, { width: pageWidth - 10 })
+
+              doc.moveDown(0.2)
+
+              // Subtle left border for subsection content
+              const subStartY = doc.y
+              const subText = stripHtml(sub.content)
+
+              if (subText) {
+                doc
+                  .fontSize(10)
+                  .fillColor(TEXT_DARK)
+                  .text(subText, 70, doc.y, { width: pageWidth - 20, lineGap: 2 })
+              }
+
+              // Draw left border line
+              const subEndY = doc.y
+              doc
+                .moveTo(62, subStartY)
+                .lineTo(62, subEndY)
+                .strokeColor(BORDER_LIGHT)
+                .lineWidth(1.5)
+                .stroke()
+
+              doc.moveDown(0.6)
+            }
+          }
+
+          doc.moveDown(0.4)
         }
       }
 
-      html += `
-    </section>`
-      return html
-    })
-    .join('')
+      // ============================================
+      // DISCLAIMER
+      // ============================================
+      if (protocol.disclaimer) {
+        ensureSpace(doc, 120)
 
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHtml(protocol.title)}</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+        doc.moveDown(0.5)
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      background: white;
-      padding: 0;
-    }
+        const disclaimerText = stripHtml(protocol.disclaimer)
+        doc.fontSize(9)
+        const disclaimerHeight = doc.heightOfString(disclaimerText, {
+          width: pageWidth - 30,
+        })
 
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 40px;
-      background: white;
-    }
+        const disclaimerStartY = doc.y
 
-    header {
-      border-bottom: 3px solid #47684b;
-      padding-bottom: 30px;
-      margin-bottom: 40px;
-    }
+        // Gray background
+        doc
+          .rect(55, disclaimerStartY - 5, pageWidth, disclaimerHeight + 55)
+          .fill('#f0f0f0')
 
-    header h1 {
-      font-size: 2.2em;
-      color: #47684b;
-      margin-bottom: 10px;
-      font-weight: 700;
-    }
+        // Left accent
+        doc
+          .rect(55, disclaimerStartY - 5, 4, disclaimerHeight + 55)
+          .fill('#6c757d')
 
-    .generated-date {
-      font-size: 0.9em;
-      color: #666;
-      font-style: italic;
-    }
+        doc
+          .fontSize(11)
+          .fillColor('#6c757d')
+          .text('Disclaimer', 70, disclaimerStartY + 5, { width: pageWidth - 30 })
 
-    .branding {
-      font-size: 0.85em;
-      color: #5c8160;
-      margin-top: 5px;
-    }
+        doc.moveDown(0.3)
 
-    section {
-      margin-bottom: 35px;
-      page-break-inside: avoid;
-    }
+        doc
+          .fontSize(9)
+          .fillColor('#555555')
+          .text(disclaimerText, 70, doc.y, { width: pageWidth - 30, lineGap: 2 })
 
-    h2 {
-      font-size: 1.5em;
-      color: #47684b;
-      margin-bottom: 15px;
-      margin-top: 25px;
-      border-left: 4px solid #5c8160;
-      padding-left: 15px;
-    }
+        doc.moveDown(0.3)
 
-    h3 {
-      font-size: 1.15em;
-      color: #5c8160;
-      margin-bottom: 10px;
-      margin-top: 15px;
-    }
-
-    p {
-      margin-bottom: 12px;
-      text-align: justify;
-    }
-
-    .overview {
-      background: #faf8f5;
-      padding: 20px;
-      border-radius: 8px;
-      border-left: 4px solid #5c8160;
-      margin-bottom: 30px;
-    }
-
-    .overview p:last-child {
-      margin-bottom: 0;
-    }
-
-    .section-content {
-      margin-bottom: 15px;
-    }
-
-    .subsection {
-      margin-left: 10px;
-      padding-left: 15px;
-      border-left: 2px solid #e0d0bc;
-      margin-bottom: 15px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 15px 0;
-      background: white;
-      border: 1px solid #ddd;
-    }
-
-    table thead {
-      background: #47684b;
-      color: white;
-    }
-
-    table th {
-      padding: 10px 12px;
-      text-align: left;
-      font-weight: 600;
-      font-size: 0.9em;
-    }
-
-    table td {
-      padding: 8px 12px;
-      border-bottom: 1px solid #eee;
-      font-size: 0.9em;
-    }
-
-    table tbody tr:nth-child(even) {
-      background: #faf8f5;
-    }
-
-    ul, ol {
-      margin-left: 20px;
-      margin-bottom: 15px;
-    }
-
-    li {
-      margin-bottom: 6px;
-    }
-
-    .disclaimer {
-      background: #f5f5f5;
-      padding: 20px;
-      border-radius: 6px;
-      margin-top: 40px;
-      border-left: 4px solid #6c757d;
-      font-size: 0.85em;
-      color: #555;
-      line-height: 1.5;
-    }
-
-    .disclaimer h3 {
-      color: #6c757d;
-      margin-top: 0;
-    }
-
-    .footer-note {
-      margin-top: 30px;
-      padding-top: 20px;
-      border-top: 1px solid #ddd;
-      font-size: 0.8em;
-      color: #999;
-      text-align: center;
-    }
-
-    @media print {
-      body { padding: 0; }
-      .container { padding: 20px; max-width: 100%; }
-      section { page-break-inside: avoid; }
-      h2 { page-break-after: avoid; }
-      table { page-break-inside: avoid; }
-      .overview { page-break-inside: avoid; }
-    }
-
-    @media screen and (max-width: 768px) {
-      .container { padding: 20px; }
-      header h1 { font-size: 1.6em; }
-      h2 { font-size: 1.3em; }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <header>
-      <h1>${escapeHtml(protocol.title)}</h1>
-      <p class="generated-date">Generated on ${generatedDate}</p>
-      <p class="branding">Peptide Protocols &mdash; peptideprotocols.us</p>
-    </header>
-
-    <!-- Overview / Summary -->
-    <section>
-      <div class="overview">
-        <h2 style="margin-top: 0; border: none; padding-left: 0;">Protocol Overview</h2>
-        ${formatContent(protocol.summary || '')}
-      </div>
-    </section>
-
-    <!-- Dynamic Sections -->
-    ${sectionsHTML}
-
-    <!-- Disclaimer -->
-    <section>
-      <div class="disclaimer">
-        <h3>Disclaimer</h3>
-        ${formatContent(protocol.disclaimer || 'This protocol is for educational purposes only and does not constitute medical advice.')}
-        <p style="margin-top: 15px; font-style: italic;">
-          All peptides mentioned are research chemicals or off-label uses. Always consult with a qualified
-          healthcare provider before beginning any peptide protocol.
-        </p>
-      </div>
-    </section>
-
-    <div class="footer-note">
-      <p>Generated by Peptide Protocols &bull; peptideprotocols.us &bull; For educational purposes only</p>
-    </div>
-  </div>
-</body>
-</html>`
-}
-
-/**
- * Format content text into HTML paragraphs
- * Handles newlines, basic markdown-style lists, etc.
- */
-function formatContent(text: string): string {
-  if (!text) return ''
-  const escaped = escapeHtml(text)
-  // Split on double newlines for paragraphs
-  const paragraphs = escaped.split(/\n\n+/)
-  return paragraphs
-    .map((p) => {
-      const trimmed = p.trim()
-      if (!trimmed) return ''
-      // Check if it looks like a list
-      if (trimmed.match(/^[-•]\s/m)) {
-        const items = trimmed.split(/\n/).filter(Boolean)
-        return '<ul>' + items.map((i) => `<li>${i.replace(/^[-•]\s*/, '')}</li>`).join('') + '</ul>'
+        doc
+          .fontSize(8)
+          .fillColor('#777777')
+          .text(
+            'All peptides mentioned are research chemicals or off-label uses. Always consult with a qualified healthcare provider before beginning any peptide protocol.',
+            70,
+            doc.y,
+            { width: pageWidth - 30, oblique: true },
+          )
       }
-      return `<p>${trimmed.replace(/\n/g, '<br>')}</p>`
-    })
-    .join('')
-}
 
-/**
- * Escape HTML special characters
- */
-function escapeHtml(text: string): string {
-  const map: Record<string, string> = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;',
-  }
-  return text.replace(/[&<>"']/g, (m) => map[m])
+      // ============================================
+      // ADD PAGE NUMBERS
+      // ============================================
+      const pages = doc.bufferedPageRange()
+      for (let i = 0; i < pages.count; i++) {
+        doc.switchToPage(i)
+        drawFooter(doc, i + 1)
+      }
+
+      doc.end()
+    } catch (err) {
+      reject(err)
+    }
+  })
 }
 
 /**
@@ -302,7 +314,7 @@ export async function POST(req: NextRequest) {
   try {
     const protocol = await req.json()
 
-    // Validate protocol data - only require title
+    // Validate protocol data
     if (!protocol.title) {
       return NextResponse.json(
         { error: 'Invalid protocol data provided.' },
@@ -310,18 +322,18 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Generate HTML
-    const html = generateHTMLProtocol(protocol)
+    // Generate PDF
+    const pdfBuffer = await generatePDF(protocol)
 
-    // Return HTML as a downloadable file
-    return new NextResponse(html, {
+    // Return PDF as downloadable file
+    const uint8Array = new Uint8Array(pdfBuffer)
+    return new NextResponse(uint8Array, {
       status: 200,
       headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-        'Content-Disposition': `attachment; filename="peptide-protocol-${Date.now()}.html"`,
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="peptide-protocol-${Date.now()}.pdf"`,
+        'Content-Length': pdfBuffer.length.toString(),
         'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
       },
     })
   } catch (error) {
