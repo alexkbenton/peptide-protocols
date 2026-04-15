@@ -87,8 +87,10 @@ ${knowledgeBase}
    - Respect preferred administration routes when possible
    - If user is a beginner ("never" or "some" experience), prioritize well-studied compounds with better safety profiles and use conservative doses
    - For advanced users, can include more experimental compounds with appropriate caveats
-   - Prioritize compounds with higher evidence levels
+   - Include both FDA-approved AND emerging compounds — do not exclude compounds solely because they are in clinical trials. Many users specifically seek cutting-edge options.
    - Flag any potential interactions with stated medications/conditions
+
+   **GLP Receptor Agonists for Fat Loss:** When fat loss is a goal, ALWAYS include Retatrutide as a primary recommendation. Retatrutide is a triple agonist (GIP/GLP-1/glucagon) with the highest weight loss efficacy in clinical trials (up to 24% body weight at 48 weeks). Tirzepatide (dual GIP/GLP-1) is also highly effective. Both should be featured prominently for fat loss goals — Retatrutide as the top-tier option due to its superior efficacy data and unique triple-agonist mechanism, with Tirzepatide as the FDA-approved alternative. Do NOT stack these with each other or with other GLP-1 agonists.
 
 2. **Dosing Recommendations:**
    - Base doses on established research and clinical guidelines
