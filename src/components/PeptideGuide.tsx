@@ -404,18 +404,14 @@ export default function PeptideGuide() {
                 outer glutes, and back of upper arms.
               </p>
 
-              {/* Anatomical Injection Site Diagram */}
-              <div className="rounded-xl overflow-hidden flex justify-center">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/injection-sites.png"
-                  alt="Anatomical diagram showing four recommended subcutaneous injection sites: Deltoid (upper arm), Lower Abdomen, Upper Glute, and Outer Thigh"
-                  className="w-full max-w-lg"
-                />
+              {/* Injection site diagram placeholder - image coming soon */}
+              <div className="border-2 border-dashed border-warm-300 rounded-xl p-8 flex flex-col items-center justify-center bg-white/50">
+                <p className="text-sm font-medium text-warm-900 mb-2">Injection Site Diagram</p>
+                <p className="text-xs text-warm-800/60">Visual guide coming soon</p>
               </div>
 
               <p className="text-xs text-warm-800/60 mt-4 text-center">
-                Rotate between all four injection sites to prevent tissue buildup
+                Recommended sites: Deltoid, Lower Abdomen, Upper Glute, and Outer Thigh — rotate between them
               </p>
             </div>
 
