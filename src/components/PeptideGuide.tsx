@@ -364,8 +364,9 @@ export default function PeptideGuide() {
 
           <div className="max-w-2xl mb-8">
             <p className="text-body mb-6">
-              Subcutaneous (SubQ) injection is the most common route for peptide administration.
-              Proper technique minimizes pain, bruising, and infection risk.
+              Subcutaneous (SubQ) injection is the most common route for peptide administration,
+              while shallow intramuscular (IM) injection is preferred for certain peptides like BPC-157
+              for localized effects. Proper technique minimizes pain, bruising, and infection risk.
             </p>
 
             <div className="bg-white rounded-2xl p-8 border border-warm-200 mb-8">
@@ -398,56 +399,297 @@ export default function PeptideGuide() {
               </h3>
               <p className="text-sm text-warm-800/80 leading-relaxed mb-6">
                 Rotating injection sites prevents lipohypertrophy (localized fat thickening) and
-                ensures consistent absorption. Use at least 6 different sites, spacing them at
-                least 1 inch apart. Recommended sites include lower abdomen, outer thighs, and back
-                of upper arms.
+                ensures consistent absorption. Use at least 8 different sites, spacing them at
+                least 1 inch apart. Recommended sites include lower abdomen, outer thighs, upper
+                outer glutes, and back of upper arms.
               </p>
 
-              {/* Simple SVG Body Diagram */}
+              {/* Realistic Anatomical Body Diagram */}
               <div className="bg-warm-100/50 rounded-xl p-6 flex justify-center">
                 <svg
-                  viewBox="0 0 200 400"
-                  className="w-full max-w-sm"
+                  viewBox="0 0 340 620"
+                  className="w-full max-w-md"
                   xmlns="http://www.w3.org/2000/svg"
                 >
-                  {/* Head */}
-                  <circle cx="100" cy="40" r="20" fill="none" stroke="#47684b" strokeWidth="2" />
+                  <defs>
+                    <radialGradient id="siteGlow" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stopColor="#47684b" stopOpacity="0.5" />
+                      <stop offset="100%" stopColor="#47684b" stopOpacity="0" />
+                    </radialGradient>
+                    <linearGradient id="bodyFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#d4c5b0" stopOpacity="0.35" />
+                      <stop offset="100%" stopColor="#c4b5a0" stopOpacity="0.45" />
+                    </linearGradient>
+                  </defs>
 
-                  {/* Body */}
-                  <line x1="100" y1="60" x2="100" y2="120" stroke="#47684b" strokeWidth="2" />
-
-                  {/* Abdomen */}
-                  <rect x="75" y="120" width="50" height="60" fill="none" stroke="#47684b" strokeWidth="2" />
-
+                  {/* Full anatomical body silhouette */}
+                  <path
+                    d="
+                      M 170 22
+                      C 155 22, 143 34, 143 50
+                      C 143 66, 155 78, 170 78
+                      C 185 78, 197 66, 197 50
+                      C 197 34, 185 22, 170 22
+                      Z
+                    "
+                    fill="url(#bodyFill)"
+                    stroke="#8a7e6e"
+                    strokeWidth="1.5"
+                  />
+                  {/* Neck */}
+                  <path
+                    d="M 160 78 L 160 92 Q 160 96 158 98 L 158 100
+                       L 182 100
+                       L 182 98 Q 180 96 180 92 L 180 78"
+                    fill="url(#bodyFill)"
+                    stroke="#8a7e6e"
+                    strokeWidth="1.5"
+                  />
+                  {/* Torso */}
+                  <path
+                    d="
+                      M 158 100
+                      Q 140 102, 128 108
+                      L 118 114
+                      Q 108 120, 104 130
+                      L 98 148
+                      Q 96 158, 96 168
+                      L 96 188
+                      Q 96 198, 98 210
+                      L 100 220
+                      Q 102 232, 104 240
+                      L 108 258
+                      Q 110 268, 114 276
+                      L 120 290
+                      Q 124 296, 128 300
+                      L 128 302
+                      L 212 302
+                      L 212 300
+                      Q 216 296, 220 290
+                      L 226 276
+                      Q 230 268, 232 258
+                      L 236 240
+                      Q 238 232, 240 220
+                      L 242 210
+                      Q 244 198, 244 188
+                      L 244 168
+                      Q 244 158, 242 148
+                      L 236 130
+                      Q 232 120, 222 114
+                      L 212 108
+                      Q 200 102, 182 100
+                      Z
+                    "
+                    fill="url(#bodyFill)"
+                    stroke="#8a7e6e"
+                    strokeWidth="1.5"
+                  />
                   {/* Left arm */}
-                  <line x1="75" y1="70" x2="40" y2="100" stroke="#47684b" strokeWidth="2" />
-
+                  <path
+                    d="
+                      M 118 114
+                      Q 106 116, 96 122
+                      L 82 132
+                      Q 72 140, 66 152
+                      L 58 170
+                      Q 52 184, 48 200
+                      L 44 218
+                      Q 40 236, 38 248
+                      L 36 262
+                      Q 34 272, 36 278
+                      L 38 284
+                      Q 42 290, 48 290
+                      Q 54 290, 56 284
+                      L 60 270
+                      Q 64 256, 68 240
+                      L 74 220
+                      Q 78 206, 82 194
+                      L 88 176
+                      Q 92 166, 96 158
+                    "
+                    fill="url(#bodyFill)"
+                    stroke="#8a7e6e"
+                    strokeWidth="1.5"
+                  />
                   {/* Right arm */}
-                  <line x1="125" y1="70" x2="160" y2="100" stroke="#47684b" strokeWidth="2" />
-
+                  <path
+                    d="
+                      M 222 114
+                      Q 234 116, 244 122
+                      L 258 132
+                      Q 268 140, 274 152
+                      L 282 170
+                      Q 288 184, 292 200
+                      L 296 218
+                      Q 300 236, 302 248
+                      L 304 262
+                      Q 306 272, 304 278
+                      L 302 284
+                      Q 298 290, 292 290
+                      Q 286 290, 284 284
+                      L 280 270
+                      Q 276 256, 272 240
+                      L 266 220
+                      Q 262 206, 258 194
+                      L 252 176
+                      Q 248 166, 244 158
+                    "
+                    fill="url(#bodyFill)"
+                    stroke="#8a7e6e"
+                    strokeWidth="1.5"
+                  />
                   {/* Left leg */}
-                  <line x1="85" y1="180" x2="80" y2="280" stroke="#47684b" strokeWidth="2" />
-
+                  <path
+                    d="
+                      M 128 302
+                      Q 126 310, 124 320
+                      L 120 340
+                      Q 116 358, 114 378
+                      L 112 400
+                      Q 110 420, 108 440
+                      L 106 460
+                      Q 104 480, 104 496
+                      L 104 520
+                      Q 104 540, 106 550
+                      L 108 558
+                      Q 110 564, 114 568
+                      L 94 574
+                      Q 88 576, 86 580
+                      Q 84 586, 88 590
+                      Q 92 594, 100 594
+                      L 126 590
+                      Q 134 588, 138 582
+                      Q 140 576, 138 570
+                      L 134 558
+                      Q 132 548, 132 536
+                      L 132 520
+                      Q 132 500, 134 480
+                      L 138 460
+                      Q 140 440, 144 420
+                      L 148 400
+                      Q 150 380, 152 358
+                      L 156 340
+                      Q 158 326, 160 316
+                      L 162 302
+                    "
+                    fill="url(#bodyFill)"
+                    stroke="#8a7e6e"
+                    strokeWidth="1.5"
+                  />
                   {/* Right leg */}
-                  <line x1="115" y1="180" x2="120" y2="280" stroke="#47684b" strokeWidth="2" />
+                  <path
+                    d="
+                      M 212 302
+                      Q 214 310, 216 320
+                      L 220 340
+                      Q 224 358, 226 378
+                      L 228 400
+                      Q 230 420, 232 440
+                      L 234 460
+                      Q 236 480, 236 496
+                      L 236 520
+                      Q 236 540, 234 550
+                      L 232 558
+                      Q 230 564, 226 568
+                      L 246 574
+                      Q 252 576, 254 580
+                      Q 256 586, 252 590
+                      Q 248 594, 240 594
+                      L 214 590
+                      Q 206 588, 202 582
+                      Q 200 576, 202 570
+                      L 206 558
+                      Q 208 548, 208 536
+                      L 208 520
+                      Q 208 500, 206 480
+                      L 202 460
+                      Q 200 440, 196 420
+                      L 192 400
+                      Q 190 380, 188 358
+                      L 184 340
+                      Q 182 326, 180 316
+                      L 178 302
+                    "
+                    fill="url(#bodyFill)"
+                    stroke="#8a7e6e"
+                    strokeWidth="1.5"
+                  />
 
-                  {/* Injection Sites */}
-                  {/* Lower abdomen - 2 sites */}
-                  <circle cx="85" cy="160" r="6" fill="#47684b" opacity="0.8" />
-                  <circle cx="115" cy="160" r="6" fill="#47684b" opacity="0.8" />
+                  {/* Injection Site Zones - glowing highlighted areas */}
 
-                  {/* Outer thighs - 2 sites */}
-                  <circle cx="70" cy="230" r="6" fill="#47684b" opacity="0.8" />
-                  <circle cx="130" cy="230" r="6" fill="#47684b" opacity="0.8" />
+                  {/* Lower abdomen left */}
+                  <ellipse cx="148" cy="258" rx="16" ry="20" fill="url(#siteGlow)" />
+                  <ellipse cx="148" cy="258" rx="10" ry="13" fill="#47684b" opacity="0.25" stroke="#47684b" strokeWidth="1.5" strokeDasharray="4 2" />
 
-                  {/* Back of arms - 2 sites */}
-                  <circle cx="30" cy="100" r="6" fill="#47684b" opacity="0.8" />
-                  <circle cx="170" cy="100" r="6" fill="#47684b" opacity="0.8" />
+                  {/* Lower abdomen right */}
+                  <ellipse cx="192" cy="258" rx="16" ry="20" fill="url(#siteGlow)" />
+                  <ellipse cx="192" cy="258" rx="10" ry="13" fill="#47684b" opacity="0.25" stroke="#47684b" strokeWidth="1.5" strokeDasharray="4 2" />
+
+                  {/* Left outer thigh */}
+                  <ellipse cx="118" cy="400" rx="12" ry="28" fill="url(#siteGlow)" />
+                  <ellipse cx="118" cy="400" rx="8" ry="20" fill="#47684b" opacity="0.25" stroke="#47684b" strokeWidth="1.5" strokeDasharray="4 2" />
+
+                  {/* Right outer thigh */}
+                  <ellipse cx="222" cy="400" rx="12" ry="28" fill="url(#siteGlow)" />
+                  <ellipse cx="222" cy="400" rx="8" ry="20" fill="#47684b" opacity="0.25" stroke="#47684b" strokeWidth="1.5" strokeDasharray="4 2" />
+
+                  {/* Left upper arm (back/outer) */}
+                  <ellipse cx="72" cy="170" rx="10" ry="16" fill="url(#siteGlow)" />
+                  <ellipse cx="72" cy="170" rx="7" ry="11" fill="#47684b" opacity="0.25" stroke="#47684b" strokeWidth="1.5" strokeDasharray="4 2" />
+
+                  {/* Right upper arm (back/outer) */}
+                  <ellipse cx="268" cy="170" rx="10" ry="16" fill="url(#siteGlow)" />
+                  <ellipse cx="268" cy="170" rx="7" ry="11" fill="#47684b" opacity="0.25" stroke="#47684b" strokeWidth="1.5" strokeDasharray="4 2" />
+
+                  {/* Left glute (upper outer quadrant) */}
+                  <ellipse cx="136" cy="308" rx="12" ry="14" fill="url(#siteGlow)" />
+                  <ellipse cx="136" cy="308" rx="8" ry="10" fill="#47684b" opacity="0.25" stroke="#47684b" strokeWidth="1.5" strokeDasharray="4 2" />
+
+                  {/* Right glute (upper outer quadrant) */}
+                  <ellipse cx="204" cy="308" rx="12" ry="14" fill="url(#siteGlow)" />
+                  <ellipse cx="204" cy="308" rx="8" ry="10" fill="#47684b" opacity="0.25" stroke="#47684b" strokeWidth="1.5" strokeDasharray="4 2" />
+
+                  {/* Labels with leader lines */}
+                  {/* Abdomen label */}
+                  <line x1="200" y1="244" x2="262" y2="224" stroke="#47684b" strokeWidth="1" opacity="0.6" />
+                  <text x="266" y="228" fontSize="11" fill="#47684b" fontWeight="600" fontFamily="Inter, sans-serif">
+                    Lower Abdomen
+                  </text>
+                  <text x="266" y="242" fontSize="9" fill="#6b7c6d" fontFamily="Inter, sans-serif">
+                    Most common site
+                  </text>
+
+                  {/* Thigh label - left */}
+                  <line x1="110" y1="390" x2="42" y2="370" stroke="#47684b" strokeWidth="1" opacity="0.6" />
+                  <text x="4" y="366" fontSize="11" fill="#47684b" fontWeight="600" fontFamily="Inter, sans-serif">
+                    Outer Thigh
+                  </text>
+                  <text x="4" y="380" fontSize="9" fill="#6b7c6d" fontFamily="Inter, sans-serif">
+                    Easy self-inject
+                  </text>
+
+                  {/* Upper arm label */}
+                  <line x1="268" y1="156" x2="290" y2="130" stroke="#47684b" strokeWidth="1" opacity="0.6" />
+                  <text x="294" y="128" fontSize="11" fill="#47684b" fontWeight="600" fontFamily="Inter, sans-serif">
+                    Upper Arm
+                  </text>
+                  <text x="294" y="142" fontSize="9" fill="#6b7c6d" fontFamily="Inter, sans-serif">
+                    May need help
+                  </text>
+
+                  {/* Glute label */}
+                  <line x1="130" y1="314" x2="42" y2="320" stroke="#47684b" strokeWidth="1" opacity="0.6" />
+                  <text x="4" y="316" fontSize="11" fill="#47684b" fontWeight="600" fontFamily="Inter, sans-serif">
+                    Upper Glute
+                  </text>
+                  <text x="4" y="330" fontSize="9" fill="#6b7c6d" fontFamily="Inter, sans-serif">
+                    Large area, less pain
+                  </text>
                 </svg>
               </div>
 
               <p className="text-xs text-warm-800/60 mt-4 text-center">
-                Green circles indicate recommended SubQ injection sites
+                Highlighted zones show recommended subcutaneous injection sites — rotate between them
               </p>
             </div>
 
@@ -471,13 +713,92 @@ export default function PeptideGuide() {
             </div>
           </div>
 
+          {/* Shallow IM Injection Section */}
+          <div className="max-w-2xl mb-8">
+            <div className="bg-white rounded-2xl p-8 border border-warm-200 mb-8">
+              <h3 className="font-display text-lg font-medium text-warm-900 mb-4">
+                Shallow Intramuscular (IM) Injection
+              </h3>
+              <p className="text-sm text-warm-800/80 leading-relaxed mb-6">
+                Some peptides — particularly BPC-157 for injury repair — benefit from shallow IM injection,
+                which delivers the compound directly into muscle tissue near the target area. This is different
+                from deep IM injections used for vaccines and is sometimes called &ldquo;intra-lesional&rdquo; when
+                injecting near an injury site.
+              </p>
+
+              <div className="bg-sage-50 rounded-xl p-6 mb-6">
+                <h4 className="font-semibold text-warm-900 text-sm mb-3">When to Use Shallow IM vs. SubQ</h4>
+                <div className="space-y-3 text-sm text-warm-800/80">
+                  <div className="flex gap-3">
+                    <span className="font-semibold text-sage-600 flex-shrink-0">SubQ:</span>
+                    <span>Systemic peptides (GH secretagogues, GLP-1 agonists, most peptides). Absorbed into bloodstream for whole-body effects.</span>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="font-semibold text-sage-600 flex-shrink-0">Shallow IM:</span>
+                    <span>Healing/repair peptides (BPC-157, TB-500) when targeting a specific injury. Delivers higher local concentration to the area.</span>
+                  </div>
+                </div>
+              </div>
+
+              <h4 className="font-display font-medium text-warm-900 mb-4">Shallow IM Steps</h4>
+              <div className="space-y-4 mb-6">
+                {[
+                  'Wash your hands and clean the injection site with an alcohol swab.',
+                  'Use an insulin syringe (29-31G, ½ inch needle). The short needle naturally limits depth.',
+                  'Identify the muscle closest to the injury or target area.',
+                  'Insert the needle at a 90° angle (straight in) to the full depth of the ½ inch needle.',
+                  'Aspirate briefly (pull back the plunger slightly) — if blood appears, withdraw and try a nearby spot.',
+                  'Inject slowly over 5-10 seconds.',
+                  'Withdraw the needle and apply light pressure with a clean swab.',
+                ].map((step, idx) => (
+                  <div key={idx} className="flex gap-4 pb-4 last:pb-0">
+                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-sage-100">
+                      <span className="text-sm font-semibold text-sage-600">{idx + 1}</span>
+                    </div>
+                    <p className="text-sm text-warm-800/80 leading-relaxed pt-1">{step}</p>
+                  </div>
+                ))}
+              </div>
+
+              <h4 className="font-display font-medium text-warm-900 mb-4">Common Shallow IM Sites</h4>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {[
+                  { site: 'Deltoid (shoulder)', note: 'Shoulder injuries, general upper body' },
+                  { site: 'Vastus lateralis (outer thigh)', note: 'Knee injuries, quad/hamstring repair' },
+                  { site: 'Near injury site', note: 'Within 1-2 inches of the affected tendon, ligament, or muscle' },
+                  { site: 'Glute (upper outer)', note: 'Hip injuries, lower back issues' },
+                ].map((item, idx) => (
+                  <div key={idx} className="bg-warm-50 rounded-lg p-4">
+                    <p className="text-sm font-semibold text-warm-900">{item.site}</p>
+                    <p className="text-xs text-warm-800/60 mt-1">{item.note}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
+              <div className="flex gap-3">
+                <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-amber-800 mb-1">Important Note on IM Injections</p>
+                  <p className="text-sm text-amber-700/80">
+                    Shallow IM with an insulin syringe is very different from deep IM injections (like those used
+                    for testosterone or vaccines, which use longer 1-1.5&rdquo; needles). Never attempt deep IM injection
+                    without proper guidance. If you&apos;re unsure about technique, consult a healthcare provider for your
+                    first injection.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Video Placeholder */}
           <div className="border-2 border-dashed border-warm-300 rounded-2xl p-12 flex flex-col items-center justify-center bg-white/50">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-sage-100 mb-4">
               <Play className="w-8 h-8 text-sage-600" />
             </div>
             <h3 className="font-display text-lg font-medium text-warm-900">
-              Video: Subcutaneous Injection Tutorial
+              Video: Injection Tutorials
             </h3>
             <div className="mt-4 inline-flex rounded-full bg-sage-100 px-3 py-1.5 text-xs font-semibold text-sage-600 uppercase">
               Coming Soon
