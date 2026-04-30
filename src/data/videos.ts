@@ -79,14 +79,13 @@ export const videos: Video[] = [
   // },
 
   // ── Administration & Safety ─────────────────
-  // {
-  //   id: 'safety-1',
-  //   title: 'Reconstitution & Injection 101',
-  //   description: 'Step-by-step guide to reconstituting and administering peptides safely.',
-  //   wistiaId: 'abc123xyz',
-  //   category: 'Administration & Safety',
-  //   duration: '12:00',
-  // },
+  {
+    id: 'safety-1',
+    title: 'Subcutaneous Injection Tutorial',
+    description: 'A step-by-step walkthrough of how to properly administer a subcutaneous peptide injection.',
+    wistiaId: 'bb92c22aga',
+    category: 'Administration & Safety',
+  },
 ]
 
 export function getAllVideos(): Video[] {
