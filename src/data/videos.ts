@@ -81,6 +81,13 @@ export const videos: Video[] = [
   // ── Administration & Safety ─────────────────
   {
     id: 'safety-1',
+    title: 'How to Reconstitute a Peptide',
+    description: 'A step-by-step guide to properly reconstituting lyophilized peptide vials with bacteriostatic water.',
+    wistiaId: '1ietqz1f0r',
+    category: 'Administration & Safety',
+  },
+  {
+    id: 'safety-2',
     title: 'Subcutaneous Injection Tutorial',
     description: 'A step-by-step walkthrough of how to properly administer a subcutaneous peptide injection.',
     wistiaId: 'bb92c22aga',
