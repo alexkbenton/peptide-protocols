@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function GatePage() {
@@ -9,6 +9,13 @@ export default function GatePage() {
   const [confirmed, setConfirmed] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // If the visitor already passed the gate (cookie still valid), skip straight to the site.
+  useEffect(() => {
+    if (typeof document !== 'undefined' && document.cookie.split('; ').some((c) => c.startsWith('gate_passed='))) {
+      router.replace('/home')
+    }
+  }, [router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
