@@ -16,6 +16,7 @@ const links: NavLink[] = [
   { href: '/protocols', label: 'Protocols' },
   { href: '/peptides', label: 'Peptides', isNew: true },
   { href: '/guide', label: 'Guide' },
+  { href: '/calculator', label: 'Calculator', isNew: true },
   { href: '/personalize', label: 'My Protocol' },
   { href: '/videos', label: 'Videos' },
   { href: '/shop', label: 'Shop', comingSoon: true },

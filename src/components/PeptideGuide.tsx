@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import Link from 'next/link'
 import {
   Syringe,
   Thermometer,
@@ -14,6 +15,7 @@ import {
   Clock,
   Zap,
   CheckCircle2,
+  Calculator,
 } from 'lucide-react'
 import WistiaPlayer from '@/components/WistiaPlayer'
 
@@ -34,24 +36,7 @@ const sections: Section[] = [
 
 export default function PeptideGuide() {
   const [activeSection, setActiveSection] = useState('supplies')
-  const [calcInputs, setCalcInputs] = useState({
-    peptideMg: 10,
-    bacWaterMl: 2,
-    desiredDoseMcg: 100,
-  })
-  const [results, setResults] = useState({ concentration: 0, unitsToDraw: 0 })
   const sectionRefs = useRef<{ [key: string]: HTMLElement | null }>({})
-
-  // Calculate reconstitution
-  useEffect(() => {
-    if (calcInputs.peptideMg > 0 && calcInputs.bacWaterMl > 0) {
-      // Concentration in mcg per mL
-      const concentration = (calcInputs.peptideMg * 1000) / calcInputs.bacWaterMl
-      // Units to draw on 100-unit syringe
-      const unitsToDraw = (calcInputs.desiredDoseMcg / concentration) * 100
-      setResults({ concentration, unitsToDraw })
-    }
-  }, [calcInputs])
 
   // Intersection Observer for section highlighting
   useEffect(() => {
@@ -222,121 +207,25 @@ export default function PeptideGuide() {
               </div>
             </div>
 
-            {/* Reconstitution Calculator */}
-            <div className="bg-sage-600 rounded-2xl p-8 text-white mb-8">
-              <h3 className="font-display text-lg font-medium mb-6">Reconstitution Calculator</h3>
-
-              <div className="grid gap-6 md:grid-cols-3 mb-8">
-                {/* Peptide Amount */}
-                <div>
-                  <label className="block text-sm font-medium text-sage-100 mb-2">
-                    Peptide Amount (mg)
-                  </label>
-                  <input
-                    type="number"
-                    value={calcInputs.peptideMg}
-                    onChange={(e) =>
-                      setCalcInputs({ ...calcInputs, peptideMg: parseFloat(e.target.value) || 0 })
-                    }
-                    className="w-full rounded-lg bg-sage-700 px-4 py-2 text-white placeholder-sage-300 focus:outline-none focus:ring-2 focus:ring-white"
-                  />
-                  <div className="flex gap-2 mt-3 flex-wrap">
-                    {[5, 10, 15, 20, 30].map((preset) => (
-                      <button
-                        key={preset}
-                        onClick={() => setCalcInputs({ ...calcInputs, peptideMg: preset })}
-                        className="text-xs px-2.5 py-1.5 rounded-full bg-sage-500 hover:bg-sage-400 transition-colors"
-                      >
-                        {preset}mg
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* BAC Water */}
-                <div>
-                  <label className="block text-sm font-medium text-sage-100 mb-2">
-                    BAC Water Added (mL)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={calcInputs.bacWaterMl}
-                    onChange={(e) =>
-                      setCalcInputs({ ...calcInputs, bacWaterMl: parseFloat(e.target.value) || 0 })
-                    }
-                    className="w-full rounded-lg bg-sage-700 px-4 py-2 text-white placeholder-sage-300 focus:outline-none focus:ring-2 focus:ring-white"
-                  />
-                  <div className="flex gap-2 mt-3 flex-wrap">
-                    {[1, 2, 3].map((preset) => (
-                      <button
-                        key={preset}
-                        onClick={() => setCalcInputs({ ...calcInputs, bacWaterMl: preset })}
-                        className="text-xs px-2.5 py-1.5 rounded-full bg-sage-500 hover:bg-sage-400 transition-colors"
-                      >
-                        {preset}mL
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Desired Dose */}
-                <div>
-                  <label className="block text-sm font-medium text-sage-100 mb-2">
-                    Desired Dose (mcg)
-                  </label>
-                  <input
-                    type="number"
-                    step="10"
-                    value={calcInputs.desiredDoseMcg}
-                    onChange={(e) =>
-                      setCalcInputs({
-                        ...calcInputs,
-                        desiredDoseMcg: parseFloat(e.target.value) || 0,
-                      })
-                    }
-                    className="w-full rounded-lg bg-sage-700 px-4 py-2 text-white placeholder-sage-300 focus:outline-none focus:ring-2 focus:ring-white"
-                  />
-                  <div className="flex gap-2 mt-3 flex-wrap">
-                    {[50, 100, 150, 200].map((preset) => (
-                      <button
-                        key={preset}
-                        onClick={() => setCalcInputs({ ...calcInputs, desiredDoseMcg: preset })}
-                        className="text-xs px-2.5 py-1.5 rounded-full bg-sage-500 hover:bg-sage-400 transition-colors"
-                      >
-                        {preset}mcg
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Results */}
-              <div className="grid gap-6 md:grid-cols-2 bg-sage-700/50 rounded-xl p-6">
-                <div>
-                  <p className="text-sage-200 text-sm mb-1">Concentration</p>
-                  <p className="text-3xl font-display font-medium">
-                    {results.concentration.toFixed(1)} mcg/mL
-                  </p>
-                  <p className="text-xs text-sage-300 mt-1">
-                    {(results.concentration / 100).toFixed(2)} mcg per unit
-                  </p>
+            {/* Reconstitution Calculator CTA */}
+            <Link
+              href="/calculator"
+              className="group mb-8 flex items-center justify-between gap-6 rounded-2xl bg-sage-600 p-8 text-white shadow-sm transition-all hover:bg-sage-700 hover:shadow-md"
+            >
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-sage-500/50">
+                  <Calculator className="h-6 w-6" />
                 </div>
                 <div>
-                  <p className="text-sage-200 text-sm mb-1">Units to Draw</p>
-                  <p className="text-3xl font-display font-medium">
-                    {results.unitsToDraw.toFixed(1)} units
-                  </p>
-                  <p className="text-xs text-sage-300 mt-1">
-                    On a 100-unit (1mL) syringe
+                  <h3 className="font-display text-lg font-medium">Reconstitution Calculator</h3>
+                  <p className="mt-1 text-sm text-sage-100">
+                    Punch in your COA numbers — get exact units to draw, concentration, volume
+                    per dose, and doses per vial. Single peptide and blend modes.
                   </p>
                 </div>
               </div>
-
-              <p className="text-sage-200 text-xs mt-6 leading-relaxed">
-                <strong>Formula:</strong> Units to draw = (Desired dose mcg ÷ Concentration mcg/mL) × 100
-              </p>
-            </div>
+              <ChevronRight className="h-5 w-5 flex-shrink-0 transition-transform group-hover:translate-x-1" />
+            </Link>
 
             {/* Reconstitution Video */}
             <div className="overflow-hidden rounded-2xl border border-warm-200 bg-white shadow-sm">
