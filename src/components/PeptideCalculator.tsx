@@ -178,10 +178,16 @@ export default function PeptideCalculator() {
     }
   }, [components, blendBacMl, blendTargetIdx, blendTargetDoseValue, blendTargetDoseUnit, syringe])
 
+  // Peptides hidden from the calculator dropdown (e.g. oral-only compounds
+  // that aren't reconstituted from lyophilized powder)
+  const EXCLUDED_SLUGS = useMemo(() => new Set(['tadalafil']), [])
+
   const peptideOptions = useMemo(
     () =>
-      [...peptides].sort((a, b) => a.name.localeCompare(b.name)),
-    []
+      peptides
+        .filter((p) => !EXCLUDED_SLUGS.has(p.slug))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [EXCLUDED_SLUGS]
   )
 
   const selectedSinglePeptide = useMemo(
@@ -468,28 +474,20 @@ function DoseField({
   const step = unit === 'mg' ? 0.1 : 10
   return (
     <div>
-      <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-warm-800/60">
-        {label}
-      </label>
-      <div className="flex">
-        <input
-          type="number"
-          inputMode="decimal"
-          value={Number.isFinite(value) ? value : ''}
-          step={step}
-          min={min}
-          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-          className="w-full rounded-l-lg border border-r-0 border-warm-200 bg-white px-3 py-2.5 text-sm text-warm-900 focus:z-10 focus:border-sage-500 focus:outline-none focus:ring-2 focus:ring-sage-200"
-        />
-        <div className="inline-flex overflow-hidden rounded-r-lg border border-warm-200 bg-warm-50">
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <label className="block text-xs font-medium uppercase tracking-wide text-warm-800/60">
+          {label}
+        </label>
+        <div className="inline-flex rounded-full border border-warm-200 bg-warm-100 p-0.5">
           {(['mcg', 'mg'] as DoseUnit[]).map((u) => (
             <button
               key={u}
               type="button"
               onClick={() => setUnit(u)}
-              className={`px-2.5 text-xs font-medium transition-colors ${
+              aria-pressed={unit === u}
+              className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide transition-all ${
                 unit === u
-                  ? 'bg-sage-600 text-white'
+                  ? 'bg-sage-600 text-white shadow-sm'
                   : 'text-warm-800/60 hover:text-warm-900'
               }`}
             >
@@ -497,6 +495,20 @@ function DoseField({
             </button>
           ))}
         </div>
+      </div>
+      <div className="relative">
+        <input
+          type="number"
+          inputMode="decimal"
+          value={Number.isFinite(value) ? value : ''}
+          step={step}
+          min={min}
+          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+          className="w-full rounded-lg border border-warm-200 bg-white px-3 py-2.5 pr-12 text-sm text-warm-900 focus:border-sage-500 focus:outline-none focus:ring-2 focus:ring-sage-200"
+        />
+        <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-medium text-warm-800/50">
+          {unit}
+        </span>
       </div>
     </div>
   )
