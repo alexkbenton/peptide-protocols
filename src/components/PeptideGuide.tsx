@@ -15,6 +15,7 @@ import {
   Zap,
   CheckCircle2,
 } from 'lucide-react'
+import WistiaPlayer from '@/components/WistiaPlayer'
 
 interface Section {
   id: string
@@ -337,16 +338,18 @@ export default function PeptideGuide() {
               </p>
             </div>
 
-            {/* Video Placeholder */}
-            <div className="border-2 border-dashed border-warm-300 rounded-2xl p-12 flex flex-col items-center justify-center bg-white/50">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-sage-100 mb-4">
-                <Play className="w-8 h-8 text-sage-600" />
+            {/* Reconstitution Video */}
+            <div className="overflow-hidden rounded-2xl border border-warm-200 bg-white shadow-sm">
+              <div className="bg-warm-100">
+                <WistiaPlayer wistiaId="1ietqz1f0r" />
               </div>
-              <h3 className="font-display text-lg font-medium text-warm-900">
-                Video: How to Reconstitute Peptides
-              </h3>
-              <div className="mt-4 inline-flex rounded-full bg-sage-100 px-3 py-1.5 text-xs font-semibold text-sage-600 uppercase">
-                Coming Soon
+              <div className="p-5">
+                <h3 className="font-display text-lg font-medium text-warm-900">
+                  Video: How to Reconstitute Peptides
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-warm-800/60">
+                  A step-by-step guide to properly reconstituting lyophilized peptide vials with bacteriostatic water.
+                </p>
               </div>
             </div>
           </div>
