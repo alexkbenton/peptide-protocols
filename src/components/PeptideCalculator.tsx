@@ -15,6 +15,9 @@ import {
 } from 'lucide-react'
 
 type Mode = 'single' | 'blend'
+type DoseUnit = 'mcg' | 'mg'
+
+const toMcg = (value: number, unit: DoseUnit) => (unit === 'mg' ? value * 1000 : value)
 
 interface SyringeOption {
   id: string
@@ -35,11 +38,60 @@ interface BlendComponent {
   mg: number
 }
 
-const newComponent = (slug = ''): BlendComponent => ({
+const newComponent = (slug = '', mg = 5): BlendComponent => ({
   id: Math.random().toString(36).slice(2, 9),
   slug,
-  mg: 5,
+  mg,
 })
+
+interface BlendPreset {
+  id: string
+  name: string
+  description: string
+  components: { slug: string; mg: number }[]
+}
+
+const BLEND_PRESETS: BlendPreset[] = [
+  {
+    id: 'wolverine',
+    name: 'Wolverine',
+    description: 'BPC-157 + TB-500 — systemic healing & repair',
+    components: [
+      { slug: 'bpc-157', mg: 5 },
+      { slug: 'tb-500', mg: 5 },
+    ],
+  },
+  {
+    id: 'cjc-ipa',
+    name: 'CJC / IPA',
+    description: 'CJC-1295 + Ipamorelin — GH pulse',
+    components: [
+      { slug: 'cjc-1295', mg: 2 },
+      { slug: 'ipamorelin', mg: 2 },
+    ],
+  },
+  {
+    id: 'glow',
+    name: 'Glow',
+    description: 'GHK-Cu + BPC-157 + TB-500 — skin & collagen',
+    components: [
+      { slug: 'ghk-cu', mg: 50 },
+      { slug: 'bpc-157', mg: 10 },
+      { slug: 'tb-500', mg: 10 },
+    ],
+  },
+  {
+    id: 'klow',
+    name: 'Klow',
+    description: 'KPV + GHK-Cu + BPC-157 + TB-500 — gut & systemic',
+    components: [
+      { slug: 'kpv', mg: 10 },
+      { slug: 'ghk-cu', mg: 50 },
+      { slug: 'bpc-157', mg: 10 },
+      { slug: 'tb-500', mg: 10 },
+    ],
+  },
+]
 
 const fmt = (n: number, digits = 2) => {
   if (!isFinite(n) || isNaN(n)) return '—'
@@ -56,7 +108,8 @@ export default function PeptideCalculator() {
   const [singleSlug, setSingleSlug] = useState<string>('tesamorelin')
   const [singleMg, setSingleMg] = useState<number>(10)
   const [bacMl, setBacMl] = useState<number>(2)
-  const [doseMcg, setDoseMcg] = useState<number>(100)
+  const [doseValue, setDoseValue] = useState<number>(100)
+  const [doseUnit, setDoseUnit] = useState<DoseUnit>('mcg')
   const [syringeId, setSyringeId] = useState<string>(SYRINGE_OPTIONS[0].id)
 
   // Blend inputs
@@ -66,7 +119,8 @@ export default function PeptideCalculator() {
   ])
   const [blendBacMl, setBlendBacMl] = useState<number>(2)
   const [blendTargetIdx, setBlendTargetIdx] = useState<number>(0)
-  const [blendTargetDoseMcg, setBlendTargetDoseMcg] = useState<number>(100)
+  const [blendTargetDoseValue, setBlendTargetDoseValue] = useState<number>(100)
+  const [blendTargetDoseUnit, setBlendTargetDoseUnit] = useState<DoseUnit>('mcg')
   const [blendSyringeId, setBlendSyringeId] = useState<string>(SYRINGE_OPTIONS[0].id)
 
   const syringe = useMemo(
@@ -80,24 +134,26 @@ export default function PeptideCalculator() {
   const singleResults = useMemo(() => {
     const mg = Number(singleMg) || 0
     const ml = Number(bacMl) || 0
-    const dose = Number(doseMcg) || 0
-    if (mg <= 0 || ml <= 0 || dose <= 0) return null
+    const doseMcg = toMcg(Number(doseValue) || 0, doseUnit)
+    if (mg <= 0 || ml <= 0 || doseMcg <= 0) return null
     const concentrationMcgPerMl = (mg * 1000) / ml
-    const volumePerDoseMl = dose / concentrationMcgPerMl
+    const volumePerDoseMl = doseMcg / concentrationMcgPerMl
     const unitsToDraw = volumePerDoseMl * 100 // U-100: 100 units = 1 mL
-    const dosesPerVial = (mg * 1000) / dose
+    const dosesPerVial = (mg * 1000) / doseMcg
     return {
       concentrationMcgPerMl,
       volumePerDoseMl,
       unitsToDraw,
       dosesPerVial,
+      doseMcg,
       overflow: volumePerDoseMl > syringe.capacityMl,
     }
-  }, [singleMg, bacMl, doseMcg, syringe])
+  }, [singleMg, bacMl, doseValue, doseUnit, syringe])
 
   const blendResults = useMemo(() => {
     const ml = Number(blendBacMl) || 0
     const target = components[blendTargetIdx]
+    const blendTargetDoseMcg = toMcg(Number(blendTargetDoseValue) || 0, blendTargetDoseUnit)
     if (!target || ml <= 0 || target.mg <= 0 || blendTargetDoseMcg <= 0) return null
     const targetConcentration = (target.mg * 1000) / ml
     const volumePerDoseMl = blendTargetDoseMcg / targetConcentration
@@ -117,9 +173,10 @@ export default function PeptideCalculator() {
       volumePerDoseMl,
       unitsToDraw,
       breakdown,
+      blendTargetDoseMcg,
       overflow: volumePerDoseMl > syringe.capacityMl,
     }
-  }, [components, blendBacMl, blendTargetIdx, blendTargetDoseMcg, syringe])
+  }, [components, blendBacMl, blendTargetIdx, blendTargetDoseValue, blendTargetDoseUnit, syringe])
 
   const peptideOptions = useMemo(
     () =>
@@ -151,6 +208,28 @@ export default function PeptideCalculator() {
 
   const updateComponent = (id: string, patch: Partial<BlendComponent>) => {
     setComponents((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)))
+  }
+
+  const [activePresetId, setActivePresetId] = useState<string | null>(null)
+
+  const applyPreset = (preset: BlendPreset) => {
+    setComponents(preset.components.map((c) => newComponent(c.slug, c.mg)))
+    setBlendTargetIdx(0)
+    setActivePresetId(preset.id)
+  }
+
+  // Clear active preset if user edits any component or count diverges
+  const onComponentChange = (id: string, patch: Partial<BlendComponent>) => {
+    setActivePresetId(null)
+    updateComponent(id, patch)
+  }
+  const onAddComponent = () => {
+    setActivePresetId(null)
+    addComponent()
+  }
+  const onRemoveComponent = (id: string) => {
+    setActivePresetId(null)
+    removeComponent(id)
   }
 
   return (
@@ -197,8 +276,10 @@ export default function PeptideCalculator() {
                 setMg={setSingleMg}
                 bacMl={bacMl}
                 setBacMl={setBacMl}
-                doseMcg={doseMcg}
-                setDoseMcg={setDoseMcg}
+                doseValue={doseValue}
+                setDoseValue={setDoseValue}
+                doseUnit={doseUnit}
+                setDoseUnit={setDoseUnit}
                 syringeId={syringeId}
                 setSyringeId={setSyringeId}
               />
@@ -206,17 +287,21 @@ export default function PeptideCalculator() {
               <BlendInputs
                 peptideOptions={peptideOptions}
                 components={components}
-                addComponent={addComponent}
-                removeComponent={removeComponent}
-                updateComponent={updateComponent}
+                addComponent={onAddComponent}
+                removeComponent={onRemoveComponent}
+                updateComponent={onComponentChange}
                 bacMl={blendBacMl}
                 setBacMl={setBlendBacMl}
                 targetIdx={blendTargetIdx}
                 setTargetIdx={setBlendTargetIdx}
-                targetDoseMcg={blendTargetDoseMcg}
-                setTargetDoseMcg={setBlendTargetDoseMcg}
+                targetDoseValue={blendTargetDoseValue}
+                setTargetDoseValue={setBlendTargetDoseValue}
+                targetDoseUnit={blendTargetDoseUnit}
+                setTargetDoseUnit={setBlendTargetDoseUnit}
                 syringeId={blendSyringeId}
                 setSyringeId={setBlendSyringeId}
+                activePresetId={activePresetId}
+                applyPreset={applyPreset}
               />
             )}
           </div>
@@ -256,14 +341,16 @@ export default function PeptideCalculator() {
               <SingleResults
                 results={singleResults}
                 syringe={syringe}
-                doseMcg={doseMcg}
+                doseValue={doseValue}
+                doseUnit={doseUnit}
               />
             ) : (
               <BlendResults
                 results={blendResults}
                 syringe={syringe}
                 targetIdx={blendTargetIdx}
-                targetDoseMcg={blendTargetDoseMcg}
+                targetDoseValue={blendTargetDoseValue}
+                targetDoseUnit={blendTargetDoseUnit}
                 peptideOptions={peptideOptions}
               />
             )}
@@ -363,6 +450,58 @@ function NumberField({
   )
 }
 
+function DoseField({
+  label,
+  value,
+  onChange,
+  unit,
+  setUnit,
+  min = 0,
+}: {
+  label: string
+  value: number
+  onChange: (v: number) => void
+  unit: DoseUnit
+  setUnit: (u: DoseUnit) => void
+  min?: number
+}) {
+  const step = unit === 'mg' ? 0.1 : 10
+  return (
+    <div>
+      <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-warm-800/60">
+        {label}
+      </label>
+      <div className="flex">
+        <input
+          type="number"
+          inputMode="decimal"
+          value={Number.isFinite(value) ? value : ''}
+          step={step}
+          min={min}
+          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+          className="w-full rounded-l-lg border border-r-0 border-warm-200 bg-white px-3 py-2.5 text-sm text-warm-900 focus:z-10 focus:border-sage-500 focus:outline-none focus:ring-2 focus:ring-sage-200"
+        />
+        <div className="inline-flex overflow-hidden rounded-r-lg border border-warm-200 bg-warm-50">
+          {(['mcg', 'mg'] as DoseUnit[]).map((u) => (
+            <button
+              key={u}
+              type="button"
+              onClick={() => setUnit(u)}
+              className={`px-2.5 text-xs font-medium transition-colors ${
+                unit === u
+                  ? 'bg-sage-600 text-white'
+                  : 'text-warm-800/60 hover:text-warm-900'
+              }`}
+            >
+              {u}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function SyringeRadio({
   value,
   onChange,
@@ -407,8 +546,10 @@ function SingleInputs({
   setMg,
   bacMl,
   setBacMl,
-  doseMcg,
-  setDoseMcg,
+  doseValue,
+  setDoseValue,
+  doseUnit,
+  setDoseUnit,
   syringeId,
   setSyringeId,
 }: {
@@ -419,8 +560,10 @@ function SingleInputs({
   setMg: (v: number) => void
   bacMl: number
   setBacMl: (v: number) => void
-  doseMcg: number
-  setDoseMcg: (v: number) => void
+  doseValue: number
+  setDoseValue: (v: number) => void
+  doseUnit: DoseUnit
+  setDoseUnit: (u: DoseUnit) => void
   syringeId: string
   setSyringeId: (v: string) => void
 }) {
@@ -447,12 +590,12 @@ function SingleInputs({
           unit="mL"
           step={0.1}
         />
-        <NumberField
+        <DoseField
           label="Desired dose"
-          value={doseMcg}
-          onChange={setDoseMcg}
-          unit="mcg"
-          step={10}
+          value={doseValue}
+          onChange={setDoseValue}
+          unit={doseUnit}
+          setUnit={setDoseUnit}
         />
       </div>
       <SyringeRadio value={syringeId} onChange={setSyringeId} />
@@ -470,10 +613,14 @@ function BlendInputs({
   setBacMl,
   targetIdx,
   setTargetIdx,
-  targetDoseMcg,
-  setTargetDoseMcg,
+  targetDoseValue,
+  setTargetDoseValue,
+  targetDoseUnit,
+  setTargetDoseUnit,
   syringeId,
   setSyringeId,
+  activePresetId,
+  applyPreset,
 }: {
   peptideOptions: PeptideOpt[]
   components: BlendComponent[]
@@ -484,13 +631,55 @@ function BlendInputs({
   setBacMl: (v: number) => void
   targetIdx: number
   setTargetIdx: (v: number) => void
-  targetDoseMcg: number
-  setTargetDoseMcg: (v: number) => void
+  targetDoseValue: number
+  setTargetDoseValue: (v: number) => void
+  targetDoseUnit: DoseUnit
+  setTargetDoseUnit: (u: DoseUnit) => void
   syringeId: string
   setSyringeId: (v: string) => void
+  activePresetId: string | null
+  applyPreset: (preset: BlendPreset) => void
 }) {
   return (
     <div className="space-y-5">
+      {/* Common Blend Presets */}
+      <div>
+        <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-warm-800/60">
+          Common blends
+        </label>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {BLEND_PRESETS.map((preset) => {
+            const active = activePresetId === preset.id
+            return (
+              <button
+                key={preset.id}
+                type="button"
+                onClick={() => applyPreset(preset)}
+                title={preset.description}
+                className={`rounded-lg border px-3 py-2 text-left transition-all ${
+                  active
+                    ? 'border-sage-600 bg-sage-50 shadow-sm'
+                    : 'border-warm-200 bg-white hover:border-sage-300 hover:bg-warm-50'
+                }`}
+              >
+                <p
+                  className={`text-sm font-semibold ${
+                    active ? 'text-sage-700' : 'text-warm-900'
+                  }`}
+                >
+                  {preset.name}
+                </p>
+                <p className="mt-0.5 truncate text-[10px] text-warm-800/50">
+                  {preset.components
+                    .map((c) => `${c.mg}mg ${peptideOptions.find((p) => p.slug === c.slug)?.name ?? c.slug}`)
+                    .join(' + ')}
+                </p>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
       <div>
         <div className="mb-2 flex items-center justify-between">
           <label className="block text-xs font-medium uppercase tracking-wide text-warm-800/60">
@@ -577,12 +766,12 @@ function BlendInputs({
           unit="mL"
           step={0.1}
         />
-        <NumberField
+        <DoseField
           label="Target dose"
-          value={targetDoseMcg}
-          onChange={setTargetDoseMcg}
-          unit="mcg"
-          step={10}
+          value={targetDoseValue}
+          onChange={setTargetDoseValue}
+          unit={targetDoseUnit}
+          setUnit={setTargetDoseUnit}
         />
       </div>
 
@@ -662,7 +851,8 @@ function StatRow({
 function SingleResults({
   results,
   syringe,
-  doseMcg,
+  doseValue,
+  doseUnit,
 }: {
   results:
     | {
@@ -670,12 +860,21 @@ function SingleResults({
         volumePerDoseMl: number
         unitsToDraw: number
         dosesPerVial: number
+        doseMcg: number
         overflow: boolean
       }
     | null
   syringe: SyringeOption
-  doseMcg: number
+  doseValue: number
+  doseUnit: DoseUnit
 }) {
+  // Concentration: show in mg/mL when very large numbers in mcg get unwieldy
+  const concentrationDisplay = results
+    ? results.concentrationMcgPerMl >= 10000
+      ? { val: results.concentrationMcgPerMl / 1000, hint: 'mg/mL' }
+      : { val: results.concentrationMcgPerMl, hint: 'mcg/mL' }
+    : null
+
   return (
     <ResultShell
       unitsToDraw={results?.unitsToDraw ?? null}
@@ -685,8 +884,8 @@ function SingleResults({
     >
       <StatRow
         label="Concentration"
-        value={results ? `${fmt(results.concentrationMcgPerMl, 1)}` : '—'}
-        hint="mcg/mL"
+        value={concentrationDisplay ? fmt(concentrationDisplay.val, 2) : '—'}
+        hint={concentrationDisplay?.hint}
       />
       <StatRow
         label="Volume / dose"
@@ -696,7 +895,7 @@ function SingleResults({
       <StatRow
         label="Doses / vial"
         value={results ? `${fmt(results.dosesPerVial, 1)}` : '—'}
-        hint={results ? `at ${fmt(doseMcg, 0)} mcg` : ''}
+        hint={results ? `at ${fmt(doseValue, 2)} ${doseUnit}` : ''}
       />
     </ResultShell>
   )
@@ -706,7 +905,8 @@ function BlendResults({
   results,
   syringe,
   targetIdx,
-  targetDoseMcg,
+  targetDoseValue,
+  targetDoseUnit,
   peptideOptions,
 }: {
   results:
@@ -721,16 +921,23 @@ function BlendResults({
           deliveredMcg: number
           dosesPerVial: number
         }[]
+        blendTargetDoseMcg: number
         overflow: boolean
       }
     | null
   syringe: SyringeOption
   targetIdx: number
-  targetDoseMcg: number
+  targetDoseValue: number
+  targetDoseUnit: DoseUnit
   peptideOptions: PeptideOpt[]
 }) {
   const nameFor = (slug: string) =>
     peptideOptions.find((o) => o.slug === slug)?.name ?? 'Custom'
+
+  const formatDelivered = (mcg: number) => {
+    if (targetDoseUnit === 'mg') return { value: fmt(mcg / 1000, 3), unit: 'mg' }
+    return { value: fmt(mcg, 1), unit: 'mcg' }
+  }
 
   return (
     <ResultShell
@@ -740,9 +947,10 @@ function BlendResults({
       overflow={!!results?.overflow}
       bigSubtitle={
         results
-          ? `${fmt(results.volumePerDoseMl, 3)} mL delivers ${fmt(targetDoseMcg, 0)} mcg of ${nameFor(
-              results.breakdown[targetIdx]?.slug ?? ''
-            )}`
+          ? `${fmt(results.volumePerDoseMl, 3)} mL delivers ${fmt(
+              targetDoseValue,
+              targetDoseUnit === 'mg' ? 2 : 0
+            )} ${targetDoseUnit} of ${nameFor(results.breakdown[targetIdx]?.slug ?? '')}`
           : undefined
       }
     >
@@ -751,29 +959,30 @@ function BlendResults({
           <p className="mb-2 text-xs uppercase tracking-wide text-sage-200">
             Per-dose breakdown
           </p>
-          {results.breakdown.map((b, idx) => (
-            <div
-              key={b.id}
-              className={`flex items-baseline justify-between gap-3 border-b border-sage-500/30 py-2.5 last:border-b-0 ${
-                idx === targetIdx ? 'text-white' : 'text-sage-100'
-              }`}
-            >
-              <span className="text-xs">
-                {nameFor(b.slug)}
-                {idx === targetIdx && (
-                  <span className="ml-1.5 rounded-full bg-white/15 px-1.5 py-0.5 text-[10px] uppercase">
-                    target
-                  </span>
-                )}
-              </span>
-              <span className="text-right">
-                <span className="font-display text-base font-medium">
-                  {fmt(b.deliveredMcg, 1)}
+          {results.breakdown.map((b, idx) => {
+            const d = formatDelivered(b.deliveredMcg)
+            return (
+              <div
+                key={b.id}
+                className={`flex items-baseline justify-between gap-3 border-b border-sage-500/30 py-2.5 last:border-b-0 ${
+                  idx === targetIdx ? 'text-white' : 'text-sage-100'
+                }`}
+              >
+                <span className="text-xs">
+                  {nameFor(b.slug)}
+                  {idx === targetIdx && (
+                    <span className="ml-1.5 rounded-full bg-white/15 px-1.5 py-0.5 text-[10px] uppercase">
+                      target
+                    </span>
+                  )}
                 </span>
-                <span className="ml-1 text-xs text-sage-200">mcg</span>
-              </span>
-            </div>
-          ))}
+                <span className="text-right">
+                  <span className="font-display text-base font-medium">{d.value}</span>
+                  <span className="ml-1 text-xs text-sage-200">{d.unit}</span>
+                </span>
+              </div>
+            )
+          })}
         </div>
       ) : (
         <p className="text-center text-xs text-sage-200">Awaiting inputs…</p>
