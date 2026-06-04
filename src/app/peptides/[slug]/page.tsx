@@ -45,6 +45,8 @@ const forgeAminoProducts: Record<string, { url: string; label: string }> = {
   'mots-c':       { url: 'https://www.forgeamino.com/shop/p/mots-c',               label: 'MOTS-C 10MG' },
   '5-amino-1mq':  { url: 'https://www.forgeamino.com/shop/p/5-amino-1mq',         label: '5-Amino-1MQ' },
   'slu-pp-332':   { url: 'https://www.forgeamino.com/shop/p/slu-pp-332',          label: 'SLU-PP-332' },
+  'retatrutide':  { url: 'https://www.forgeamino.com/lab',                        label: 'Retatrutide' },
+  'tirzepatide':  { url: 'https://www.forgeamino.com/lab',                        label: 'Tirzepatide' },
 }
 
 export default function PeptidePage({ params }: { params: { slug: string } }) {

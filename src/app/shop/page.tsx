@@ -73,7 +73,7 @@ export default function ShopPage() {
       <section className="bg-warm-50 py-20">
         <div className="container-narrow">
           <div className="rounded-2xl border border-sage-200 bg-white p-10 text-center">
-            <p className="text-xs font-semibold tracking-[0.2em] text-sage-600 uppercase">Sister Site</p>
+            <p className="text-xs font-semibold tracking-[0.2em] text-sage-600 uppercase">Partner Site</p>
             <h2 className="mt-3 font-display text-2xl font-medium text-warm-900">Forge Amino</h2>
             <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-warm-800/60">
               Peptide Protocols and Forge Amino are sister sites. We handle the education;

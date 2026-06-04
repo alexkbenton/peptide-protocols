@@ -37,7 +37,7 @@ export default function Footer() {
           {/* Source compounds */}
           <div>
             <h4 className="text-xs font-semibold tracking-widest text-warm-800/40 uppercase">
-              Sister Site
+              Partner Site
             </h4>
             <div className="mt-4 flex flex-col gap-3">
               <a
