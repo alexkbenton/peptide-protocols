@@ -78,8 +78,31 @@ export default function ProtocolPage({ params }: { params: { slug: string } }) {
             )}
           </div>
 
+          {/* Source compounds CTA */}
+          <div className="mt-16 rounded-2xl border border-sage-200 bg-sage-50/50 p-8">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold tracking-[0.15em] text-sage-600 uppercase">
+                  Source Your Compounds
+                </p>
+                <p className="mt-1 text-sm leading-relaxed text-warm-800/70">
+                  Forge Amino supplies independently tested research peptides with 99%+ purity
+                  and a QR-linked COA on every vial.
+                </p>
+              </div>
+              <a
+                href="https://www.forgeamino.com/shop"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 rounded-full bg-sage-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-sage-700"
+              >
+                Shop Forge Amino →
+              </a>
+            </div>
+          </div>
+
           {/* Disclaimer */}
-          <div className="mt-16 rounded-2xl bg-warm-100 p-8">
+          <div className="mt-6 rounded-2xl bg-warm-100 p-8">
             <p className="text-xs leading-relaxed text-warm-800/60">
               <strong className="text-warm-800/80">Disclaimer:</strong> This protocol is for
               educational and research purposes only. It is not medical advice. These products are not approved by the FDA. Consult a qualified

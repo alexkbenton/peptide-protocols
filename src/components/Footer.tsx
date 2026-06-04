@@ -4,7 +4,7 @@ export default function Footer() {
   return (
     <footer className="border-t border-warm-200 bg-white">
       <div className="container-wide py-12 sm:py-16">
-        <div className="grid gap-10 sm:gap-12 md:grid-cols-3">
+        <div className="grid gap-10 sm:gap-12 md:grid-cols-4">
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2 sm:gap-3">
@@ -29,10 +29,41 @@ export default function Footer() {
               <Link href="/home" className="text-sm text-warm-800/70 transition-colors hover:text-sage-600">Home</Link>
               <Link href="/protocols" className="text-sm text-warm-800/70 transition-colors hover:text-sage-600">Protocols</Link>
               <Link href="/videos" className="text-sm text-warm-800/70 transition-colors hover:text-sage-600">Videos</Link>
-              <Link href="/shop" className="text-sm text-warm-800/70 transition-colors hover:text-sage-600">
-                Shop <span className="text-[10px] text-sage-500">(Coming Soon)</span>
-              </Link>
+              <Link href="/shop" className="text-sm text-warm-800/70 transition-colors hover:text-sage-600">Source Compounds</Link>
               <Link href="/about" className="text-sm text-warm-800/70 transition-colors hover:text-sage-600">About</Link>
+            </div>
+          </div>
+
+          {/* Source compounds */}
+          <div>
+            <h4 className="text-xs font-semibold tracking-widest text-warm-800/40 uppercase">
+              Sister Site
+            </h4>
+            <div className="mt-4 flex flex-col gap-3">
+              <a
+                href="https://www.forgeamino.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-medium text-sage-600 transition-colors hover:text-sage-700"
+              >
+                Forge Amino ↗
+              </a>
+              <a
+                href="https://www.forgeamino.com/shop"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-warm-800/70 transition-colors hover:text-sage-600"
+              >
+                Shop Peptides
+              </a>
+              <a
+                href="https://www.forgeamino.com/lab"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-warm-800/70 transition-colors hover:text-sage-600"
+              >
+                Lab & Testing
+              </a>
             </div>
           </div>
 
