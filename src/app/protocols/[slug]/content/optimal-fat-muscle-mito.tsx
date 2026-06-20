@@ -89,7 +89,7 @@ export default function OptimalFatMuscleContent() {
           <BulletList items={[
             <>Weeks 1&ndash;2: 500 mcg daily</>,
             <>Weeks 3+: 1 mg daily</>,
-            <>Alternative: 3&ndash;5 mg, 3&times;/week</>,
+            <>Alternative: 5 mg twice weekly, or 10 mg once weekly</>,
           ]} />
           <Note>
             Some people report slight allergic reaction at injection site. Start slowly and reconstitute with greater volume BAC water to minimize symptoms.
@@ -113,7 +113,7 @@ export default function OptimalFatMuscleContent() {
             A novel compound that mimics exercise effects by activating ERRs (estrogen-related receptors), enhancing mitochondrial biogenesis and energy metabolism.
           </P>
           <BulletList items={[
-            <>500 mcg daily for 12 weeks, cycle off 4&ndash;6 weeks</>,
+            <>250 mcg oral every other day for 12 weeks, cycle off 4&ndash;6 weeks</>,
           ]} />
           <Warning>
             This is the least studied compound with the least amount of animal and human data. Dosing protocol is primarily anecdotal and will require further study for firm recommendations.
@@ -140,7 +140,7 @@ export default function OptimalFatMuscleContent() {
             Facilitates fatty acid transport into mitochondria for energy production, enhancing exercise performance.
           </P>
           <BulletList items={[
-            <><Strong>Injectable:</Strong> 200&ndash;500 mg IM 3&times;/week pre-workout</>,
+            <><Strong>Injectable:</Strong> 500 mg IM daily (AM)</>,
             <><Strong>Oral:</Strong> Poorly bioavailable (14&ndash;18%). If taken orally, recommend 2,000 mg daily with meals (carbohydrates enhance absorption)</>,
           ]} />
         </SubSection>

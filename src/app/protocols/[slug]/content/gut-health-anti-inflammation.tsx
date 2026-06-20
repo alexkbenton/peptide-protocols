@@ -53,7 +53,7 @@ export default function GutHealthContent() {
         <OptionCard title="Option 1: Minimal Effective Stack (2 Peptides) &mdash; Best starter for pure gut issues">
           <BulletList items={[
             <><Strong>BPC-157:</Strong> 250&ndash;500 mcg oral capsule once or twice daily (empty stomach).</>,
-            <><Strong>KPV:</Strong> 200&ndash;500 mcg oral capsule daily (often combined with BPC-157 in one capsule for convenience).</>,
+            <><Strong>KPV:</Strong> 250&ndash;500 mcg oral capsule daily (often combined with BPC-157 in one capsule for convenience).</>,
           ]} />
           <P><Strong>Why?</Strong> Synergistic gut-lining repair + inflammation control. Many oral &ldquo;gut inflammation&rdquo; blends use exactly this pair.</P>
           <P><Strong>Duration:</Strong> 4&ndash;6 weeks.</P>
@@ -62,7 +62,7 @@ export default function GutHealthContent() {
         <OptionCard title="Option 2: Balanced Healing Stack (3 Peptides) &mdash; Gut + mild systemic inflammation">
           <BulletList items={[
             <>Keep BPC-157 + KPV oral as above.</>,
-            <><Strong>Add TB-500:</Strong> 2.5&ndash;5 mg subcutaneous injection, 2 times per week (e.g., Monday/Thursday).</>,
+            <><Strong>Add TB-500:</Strong> 1&ndash;5 mg subcutaneous injection, 2&ndash;3 times per week (e.g., 1 mg every other day for the first 4 weeks).</>,
           ]} />
           <P><Strong>Why?</Strong> TB-500 amplifies tissue repair and reduces broader inflammation without daily injections.</P>
         </OptionCard>
@@ -70,8 +70,8 @@ export default function GutHealthContent() {
         <OptionCard title="Option 3: Comprehensive Recovery Stack (4 Peptides) &mdash; Most common advanced option">
           <BulletList items={[
             <><Strong>BPC-157:</Strong> 250&ndash;500 mcg oral daily.</>,
-            <><Strong>KPV:</Strong> 200&ndash;500 mcg oral daily.</>,
-            <><Strong>TB-500:</Strong> 2.5&ndash;5 mg subQ, 2&times;/week.</>,
+            <><Strong>KPV:</Strong> 250&ndash;500 mcg oral daily.</>,
+            <><Strong>TB-500:</Strong> 1&ndash;5 mg subQ, 2&ndash;3&times;/week (1 mg EOD for first 4 weeks).</>,
             <><Strong>GHK-Cu:</Strong> 1&ndash;2 mg subQ once daily (can be mixed with TB-500 or BPC-157 in the same syringe if fresh; some prefer separate to avoid copper degradation of other peptides).</>,
           ]} />
           <P><Strong>Why?</Strong> Full-spectrum: gut repair (BPC/KPV), systemic healing/anti-inflammatory (TB-500), plus collagen/antioxidant regeneration (GHK-Cu). Widely used in research recovery protocols.</P>

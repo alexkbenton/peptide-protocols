@@ -11,10 +11,10 @@ export default function CellularRepairContent() {
 
       <Section title="Dosing Summary">
         <DosingTable rows={[
-          { compound: 'SS-31', dose: '1–5 mg (start low)', frequency: 'Daily subQ', cycle: '8 weeks on / 4 off', notes: 'Reconstitute 10mg vial with 2ml BAC water; inject 0.1–0.4ml' },
+          { compound: 'SS-31', dose: '500 mcg', frequency: 'Daily subQ (AM)', cycle: '8 weeks on / 4 off', notes: 'Reconstitute 5mg vial with 1ml BAC water' },
           { compound: 'Pinealon', dose: '100–200 mcg', frequency: 'Daily subQ (PM)', cycle: '10–20 days on / 1–2 months off', notes: 'Short cycles; brain repair focus. 20mg vial in 2ml water' },
-          { compound: 'Epithalon', dose: '5–10 mg', frequency: 'Daily subQ for 10–20 days', cycle: '10–20 days on / 4–6 months off', notes: 'Telomere extension; repeat 2–3×/year. 10mg vial in 1ml water' },
-          { compound: 'NAD+', dose: '100–300 mg', frequency: 'Load: 100mg/day × 5–7 days, then 50–100mg 3×/week', cycle: '4–8 weeks on / 4 off', notes: 'Energy boost; nasal/sublingual alt. Liposomal for subQ' },
+          { compound: 'Epithalon', dose: '5–10 mg', frequency: 'Daily subQ (PM) for 10–20 days', cycle: '10–20 days on / 4–6 months off', notes: 'Telomere extension; repeat 2–3×/year. 10mg vial in 2ml water' },
+          { compound: 'NAD+', dose: '50–150 mg', frequency: 'Daily subQ (AM)', cycle: '4–8 weeks on / 4 off', notes: 'Energy boost; nasal/sublingual alt. 500mg vial in 5ml water' },
           { compound: 'FOXO4-DRI', dose: '5–10 mg', frequency: '3×/week', cycle: '1–2 weeks, 3×/year', notes: 'Senolytic; use 3 days/week to avoid tolerance. 10mg vial' },
         ]} />
       </Section>
