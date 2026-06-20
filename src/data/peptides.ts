@@ -91,14 +91,14 @@ export const peptides: Peptide[] = [
     evidenceLevel: 'emerging',
     dosing: {
       beginnerIntermediate: {
-        dose: '2-2.5 mg',
-        frequency: 'Twice weekly subcutaneous',
+        dose: '1-2.5 mg',
+        frequency: '2-3x weekly subcutaneous',
         cycleWeeks: '4-6 weeks',
-        notes: 'Standard loading phase; inject every 3-4 days'
+        notes: '1 mg every other day for the first 4 weeks as a loading phase'
       },
       advanced: {
         dose: '5 mg',
-        frequency: 'Twice weekly subcutaneous',
+        frequency: '2-3x weekly subcutaneous',
         cycleWeeks: '6-8 weeks',
         notes: 'Supports systemic regeneration across multiple tissues'
       }
@@ -137,14 +137,14 @@ export const peptides: Peptide[] = [
     evidenceLevel: 'approved',
     dosing: {
       beginnerIntermediate: {
-        dose: '100-200 mcg',
-        frequency: '3x per week subcutaneous',
+        dose: '1 mg',
+        frequency: 'Once daily subcutaneous',
         cycleWeeks: '4-8 weeks',
-        notes: 'Topical application twice daily also effective for skin'
+        notes: 'Reconstitute 50 mg vial with 2-3 ml BAC water; topical also effective for skin'
       },
       advanced: {
-        dose: '200-500 mcg',
-        frequency: 'Daily subcutaneous',
+        dose: '2 mg',
+        frequency: 'Once daily subcutaneous',
         cycleWeeks: '8-12 weeks',
         notes: 'Higher doses support comprehensive collagen remodeling'
       }
@@ -181,8 +181,8 @@ export const peptides: Peptide[] = [
     evidenceLevel: 'preclinical',
     dosing: {
       beginnerIntermediate: {
-        dose: '200-250 mcg',
-        frequency: 'Once daily oral on empty stomach',
+        dose: '250-500 mcg',
+        frequency: 'Once or twice daily oral on empty stomach',
         cycleWeeks: '4 weeks',
         notes: 'Take 30-60 minutes before food for optimal absorption'
       },
@@ -274,10 +274,10 @@ export const peptides: Peptide[] = [
     evidenceLevel: 'emerging',
     dosing: {
       beginnerIntermediate: {
-        dose: '2-4 mg',
+        dose: '1-4 mg',
         frequency: 'Once weekly subcutaneous',
         cycleWeeks: '12+ weeks with dose escalation',
-        notes: 'Start at 2 mg, escalate 2 mg every 4 weeks'
+        notes: 'Start at 1 mg, escalate gradually (~0.5-1 mg) every 4 weeks'
       },
       advanced: {
         dose: '8-12 mg',
@@ -421,16 +421,16 @@ export const peptides: Peptide[] = [
     evidenceLevel: 'emerging',
     dosing: {
       beginnerIntermediate: {
-        dose: '5-10 mg',
-        frequency: '3x per week subcutaneous',
-        cycleWeeks: '4-8 weeks',
-        notes: 'First human dose established at 25 mg daily; work with provider'
+        dose: '1 mg',
+        frequency: 'Once daily subcutaneous (AM)',
+        cycleWeeks: 'Up to 60 days',
+        notes: 'Start at 1 mg; reconstitute with greater BAC volume if injection-site reactions occur'
       },
       advanced: {
-        dose: '10-15 mg',
-        frequency: '3-5x per week subcutaneous',
+        dose: '5 mg twice weekly, or 10 mg once weekly',
+        frequency: 'Subcutaneous',
         cycleWeeks: '8-12 weeks',
-        notes: 'Higher frequency supports sustained metabolic benefits'
+        notes: 'Lower-frequency maintenance dosing as an alternative to daily'
       }
     },
     mechanism: 'Upregulated during exercise; activates AMPK-FOXA2 pathway to restore insulin sensitivity independent of weight loss. Increases mitochondrial biogenesis, fatty acid oxidation, and oxidative capacity.',
@@ -467,16 +467,16 @@ export const peptides: Peptide[] = [
     evidenceLevel: 'preclinical',
     dosing: {
       beginnerIntermediate: {
-        dose: '10-20 mg',
-        frequency: 'Once daily oral',
+        dose: '250 mcg',
+        frequency: 'Every other day oral (AM)',
         cycleWeeks: '4 weeks',
         notes: 'Estimated from preclinical data; no human dosing established'
       },
       advanced: {
-        dose: '30-50 mg',
-        frequency: 'Once daily oral',
+        dose: '250 mcg',
+        frequency: 'Once daily oral (AM)',
         cycleWeeks: '8-12 weeks',
-        notes: 'Higher doses enhance exercise capacity mimicry'
+        notes: 'Least-studied compound; dosing is anecdotal and experimental'
       }
     },
     mechanism: 'Binds ligand-binding domain of ERRα, promoting interaction with PGC-1α. Triggers acute aerobic exercise genetic program with increased type IIa oxidative muscle fibers, mitochondrial biogenesis, and energy expenditure.',
@@ -608,10 +608,10 @@ export const peptides: Peptide[] = [
     evidenceLevel: 'approved',
     dosing: {
       beginnerIntermediate: {
-        dose: '2 mg',
-        frequency: 'Once daily subcutaneous (evening)',
+        dose: '1 mg',
+        frequency: 'Once daily subcutaneous, 5 days on / 2 off',
         cycleWeeks: '12 weeks',
-        notes: 'Fixed dose regardless of body weight'
+        notes: 'Start at 1 mg (range 1-2 mg) and titrate toward 2 mg as tolerated'
       },
       advanced: {
         dose: '2 mg',
@@ -659,16 +659,16 @@ export const peptides: Peptide[] = [
     evidenceLevel: 'approved',
     dosing: {
       beginnerIntermediate: {
-        dose: '10-20 mg',
-        frequency: 'Once daily subcutaneous',
+        dose: '500 mcg',
+        frequency: 'Once daily subcutaneous (AM)',
         cycleWeeks: '4-8 weeks',
-        notes: 'SubQ dosing; rotate injection sites'
+        notes: 'Reconstitute 5 mg vial with 1 ml BAC water; rotate injection sites'
       },
       advanced: {
-        dose: '40 mg',
-        frequency: 'Once daily subcutaneous',
+        dose: '1 mg',
+        frequency: 'Once daily subcutaneous (AM)',
         cycleWeeks: '8-12 weeks',
-        notes: 'IV dosing at 0.25 mg/kg/hr over 4 hours preferred in clinic'
+        notes: 'Titrate from 500 mcg up to 1 mg daily after the first week if tolerated'
       }
     },
     mechanism: 'Binds cardiolipin on inner mitochondrial membrane, stabilizing cristae structure and suppressing electron leakage. Enhances ATP production efficiency while reducing ROS generation.',
