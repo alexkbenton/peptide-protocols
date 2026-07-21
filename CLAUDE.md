@@ -13,7 +13,7 @@
 - TypeScript
 - Tailwind CSS 3.4
 - Google Fonts: Inter (body) + Playfair Display (headings)
-- Mailchimp API for email collection (env vars not yet configured)
+- Klaviyo API for newsletter email collection (env vars not yet configured)
 - Vimeo embeds for video content
 
 ## Design System
@@ -28,11 +28,10 @@
 src/
 ├── app/
 │   ├── layout.tsx              # Root layout (fonts, meta, JSON-LD)
-│   ├── page.tsx                # Root redirect → /gate
+│   ├── page.tsx                # Root redirect → /home
 │   ├── globals.css             # Tailwind + custom components + animations
 │   ├── sitemap.ts              # Auto-generated sitemap
 │   ├── not-found.tsx           # Custom 404 page
-│   ├── gate/page.tsx           # Age verification + email capture (landing page)
 │   ├── home/page.tsx           # Main homepage
 │   ├── protocols/
 │   │   ├── page.tsx            # Protocol index grid
@@ -47,16 +46,16 @@ src/
 │   ├── about/page.tsx          # Mission/purpose page
 │   ├── privacy/page.tsx        # Privacy policy
 │   ├── terms/page.tsx          # Terms of use
-│   └── api/subscribe/route.ts  # Mailchimp email subscription endpoint
+│   └── api/subscribe/route.ts  # Klaviyo newsletter subscription endpoint
 ├── components/
 │   ├── Navigation.tsx          # Sticky nav with mobile hamburger
+│   ├── NewsletterSignup.tsx    # Klaviyo email capture (footer, videos, wizard)
 │   ├── Footer.tsx              # Site footer
 │   ├── SiteLayout.tsx          # Nav + main + footer wrapper
 │   └── ProtocolElements.tsx    # Shared protocol styling (tables, warnings, etc.)
 ├── data/
 │   ├── protocols.ts            # Protocol metadata (slug, title, category, compounds)
 │   └── videos.ts               # Video metadata (title, Vimeo ID, category)
-├── middleware.ts                # Gate enforcement (redirects unauthenticated users)
 public/
 ├── favicon.svg                 # SVG favicon (sage green P circle)
 └── robots.txt                  # SEO robots file
@@ -64,11 +63,15 @@ public/
 
 ## How Things Work
 
-### Age Gate
-- Root URL (`/`) redirects to `/gate`
-- User enters email + confirms 18+ → email sent to Mailchimp → cookie set for 30 days
-- `middleware.ts` checks for `gate_passed` cookie on all routes except `/gate`, `/api`, and static files
-- In dev mode (no Mailchimp keys), emails are logged to console and gate still works
+### Newsletter Signup
+- No age gate. Root URL (`/`) redirects straight to `/home`.
+- `NewsletterSignup` component (`src/components/NewsletterSignup.tsx`) renders in the
+  footer (site-wide), the videos page CTA, and after protocol generation in the wizard
+- Each placement passes a `source` prop, which becomes `custom_source` in Klaviyo so you
+  can see which spot converts
+- Posts to `/api/subscribe`, which calls Klaviyo's Bulk Subscribe Profiles endpoint
+- Single vs. double opt-in is controlled by the Klaviyo list setting, not by this code
+- In dev mode (no Klaviyo key), emails are logged to console and the UI still succeeds
 
 ### Protocols
 - Protocol metadata lives in `src/data/protocols.ts` (slug, title, category, compounds list)
@@ -94,9 +97,9 @@ public/
 ## Environment Variables (Vercel)
 These need to be set in Vercel → Settings → Environment Variables:
 ```
-MAILCHIMP_API_KEY=your-api-key
-MAILCHIMP_AUDIENCE_ID=your-audience-id
-MAILCHIMP_SERVER_PREFIX=us1  (or whatever your Mailchimp server prefix is)
+KLAVIYO_PRIVATE_API_KEY=pk_...   # scopes: subscriptions:write, profiles:write, lists:write
+KLAVIYO_LIST_ID=abc123           # optional; omit to use account default opt-in settings
+KLAVIYO_API_REVISION=2026-07-15  # optional; defaults to 2026-07-15
 ```
 
 ## Deployment Workflow
@@ -119,11 +122,11 @@ git push
 - Per-page title and meta descriptions
 - Open Graph and Twitter Card tags
 - Auto-generated sitemap.xml
-- robots.txt blocks /gate and /api from indexing
+- robots.txt blocks /api from indexing
 - JSON-LD structured data on root layout
 
 ## What's Not Done Yet
-- [ ] Mailchimp API keys (env vars need to be added in Vercel)
+- [ ] Klaviyo API key + list ID (env vars need to be added in Vercel)
 - [ ] Real Vimeo video IDs (currently using placeholders)
 - [ ] Shopify integration
 - [ ] Analytics (Vercel Analytics available, just needs enabling)

@@ -61,7 +61,8 @@ export default function NewsletterSignup({
             isDark ? 'text-white' : 'text-sage-700'
           }`}
         >
-          {message} We&apos;ll email you when new protocols go live.
+          {message} If we send a confirmation email, click the link to finish
+          subscribing.
         </p>
       </div>
     )

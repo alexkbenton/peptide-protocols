@@ -41,10 +41,10 @@ export default function PrivacyPage() {
               </section>
 
               <section>
-                <h2 className="font-display text-xl font-medium text-warm-900">Email Marketing (Mailchimp)</h2>
+                <h2 className="font-display text-xl font-medium text-warm-900">Email Marketing (Klaviyo)</h2>
                 <p className="mt-3 text-body">
-                  We use Mailchimp to manage our email list. When you provide your email
-                  address, it is stored securely on Mailchimp&apos;s servers. You can
+                  We use Klaviyo to manage our email list. When you provide your email
+                  address, it is stored securely on Klaviyo&apos;s servers. You can
                   unsubscribe at any time by clicking the unsubscribe link in any email
                   we send you, or by contacting us directly.
                 </p>
