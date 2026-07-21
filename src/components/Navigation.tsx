@@ -19,6 +19,7 @@ const links: NavLink[] = [
   { href: '/calculator', label: 'Calculator', isNew: true },
   { href: '/personalize', label: 'My Protocol' },
   { href: '/videos', label: 'Videos' },
+  { href: '/consultation', label: 'Consult', isNew: true },
   { href: '/shop', label: 'Source' },
   { href: '/about', label: 'About' },
 ]

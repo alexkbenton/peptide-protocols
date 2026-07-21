@@ -42,6 +42,7 @@ src/
 │   │           ├── optimal-fat-muscle-mito.tsx
 │   │           └── cellular-repair.tsx
 │   ├── videos/page.tsx         # Vimeo video grid
+│   ├── consultation/page.tsx   # Calendly booking page (personalized consults)
 │   ├── shop/page.tsx           # Coming Soon placeholder
 │   ├── about/page.tsx          # Mission/purpose page
 │   ├── privacy/page.tsx        # Privacy policy
@@ -50,6 +51,7 @@ src/
 ├── components/
 │   ├── Navigation.tsx          # Sticky nav with mobile hamburger
 │   ├── NewsletterSignup.tsx    # Klaviyo email capture (footer, videos, wizard)
+│   ├── CalendlyEmbed.tsx       # Inline Calendly scheduling widget
 │   ├── Footer.tsx              # Site footer
 │   ├── SiteLayout.tsx          # Nav + main + footer wrapper
 │   └── ProtocolElements.tsx    # Shared protocol styling (tables, warnings, etc.)
@@ -100,7 +102,13 @@ These need to be set in Vercel → Settings → Environment Variables:
 KLAVIYO_PRIVATE_API_KEY=pk_...   # scopes: subscriptions:write, profiles:write, lists:write
 KLAVIYO_LIST_ID=abc123           # optional; omit to use account default opt-in settings
 KLAVIYO_API_REVISION=2026-07-15  # optional; defaults to 2026-07-15
+NEXT_PUBLIC_CALENDLY_URL=https://calendly.com/your-name/consultation  # consult page booking widget
 ```
+
+**Note:** `NEXT_PUBLIC_CALENDLY_URL` must be prefixed `NEXT_PUBLIC_` because the
+Calendly widget runs client-side. Until it's set, `/consultation` shows a
+"consultations open soon" fallback with a waitlist email capture instead of the
+calendar.
 
 ## Deployment Workflow
 ```bash
@@ -127,6 +135,7 @@ git push
 
 ## What's Not Done Yet
 - [ ] Klaviyo API key + list ID (env vars need to be added in Vercel)
+- [ ] Calendly URL (NEXT_PUBLIC_CALENDLY_URL) — create account, set env var in Vercel
 - [ ] Real Vimeo video IDs (currently using placeholders)
 - [ ] Shopify integration
 - [ ] Analytics (Vercel Analytics available, just needs enabling)
