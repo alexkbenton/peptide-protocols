@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
 import SiteLayout from '@/components/SiteLayout'
 import WistiaPlayer from '@/components/WistiaPlayer'
+import NewsletterSignup from '@/components/NewsletterSignup'
 import {
-  categoryOrder,
   categoryDescriptions,
+  getCategoriesWithVideos,
   getVideosByCategory,
   type VideoCategory,
 } from '@/data/videos'
@@ -44,9 +45,7 @@ const categoryIcons: Record<VideoCategory, JSX.Element> = {
 }
 
 export default function VideosPage() {
-  const hasAnyVideos = categoryOrder.some(
-    (cat) => getVideosByCategory(cat).length > 0
-  )
+  const categories = getCategoriesWithVideos()
 
   return (
     <SiteLayout>
@@ -67,9 +66,8 @@ export default function VideosPage() {
       {/* Category Sections */}
       <section className="bg-white py-16">
         <div className="container-wide space-y-20">
-          {categoryOrder.map((category) => {
+          {categories.map((category) => {
             const catVideos = getVideosByCategory(category)
-            const hasVideos = catVideos.length > 0
 
             return (
               <div key={category}>
@@ -88,9 +86,8 @@ export default function VideosPage() {
                   </div>
                 </div>
 
-                {hasVideos ? (
-                  /* Video Grid */
-                  <div className="grid gap-8 md:grid-cols-2 max-w-4xl">
+                {/* Video Grid */}
+                <div className="grid gap-8 md:grid-cols-2 max-w-4xl">
                     {catVideos.map((video) => (
                       <div
                         key={video.id}
@@ -117,29 +114,6 @@ export default function VideosPage() {
                       </div>
                     ))}
                   </div>
-                ) : (
-                  /* Coming Soon Placeholder */
-                  <div className="rounded-2xl border-2 border-dashed border-warm-200 bg-warm-50/50 px-8 py-12 text-center">
-                    <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-warm-100">
-                      <svg
-                        className="h-5 w-5 text-warm-800/30"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth={1.5}
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z"
-                        />
-                      </svg>
-                    </div>
-                    <p className="text-sm font-medium text-warm-800/40">
-                      Videos coming soon
-                    </p>
-                  </div>
-                )}
               </div>
             )
           })}
@@ -150,12 +124,17 @@ export default function VideosPage() {
       <section className="bg-sage-600 py-16 text-center text-white">
         <div className="container-narrow">
           <h2 className="font-display text-3xl font-semibold">
-            Want to be notified when new videos drop?
+            More videos on the way
           </h2>
           <p className="mx-auto mt-3 max-w-md text-sage-100/80">
-            If you made it past the gate, you&apos;re already on the list.
-            We&apos;ll email you when new content goes live.
+            We&apos;re producing new episodes covering protocols, mechanisms,
+            and administration. Get an email when they drop.
           </p>
+          <NewsletterSignup
+            source="videos"
+            variant="dark"
+            className="mx-auto mt-6 max-w-md text-left"
+          />
         </div>
       </section>
     </SiteLayout>

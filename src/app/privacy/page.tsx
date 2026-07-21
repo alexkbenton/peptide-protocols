@@ -21,20 +21,22 @@ export default function PrivacyPage() {
               <section>
                 <h2 className="font-display text-xl font-medium text-warm-900">Information We Collect</h2>
                 <p className="mt-3 text-body">
-                  When you access Peptide Protocols, we collect the email address you provide
-                  at our age verification gate. This is the only personal information we
-                  actively collect. We may also collect standard analytics data such as page
-                  views and general geographic region through third-party analytics services.
+                  Peptide Protocols does not require an account or email address to browse
+                  the site. If you voluntarily sign up for our newsletter, we collect only
+                  the email address you provide. We may also collect standard analytics data
+                  such as page views and general geographic region through third-party
+                  analytics services.
                 </p>
               </section>
 
               <section>
                 <h2 className="font-display text-xl font-medium text-warm-900">How We Use Your Information</h2>
                 <p className="mt-3 text-body">
-                  Your email address is used solely for sending you educational content,
-                  updates about new protocols, and occasional newsletters related to peptide
-                  science and wellness. We will never sell, rent, or share your email address
-                  with third parties for marketing purposes.
+                  If you opt in, your email address is used solely for sending you notice of
+                  new protocols, educational content, and occasional newsletters related to
+                  peptide science and wellness. We will never sell, rent, or share your email
+                  address with third parties for marketing purposes, and you can unsubscribe
+                  at any time.
                 </p>
               </section>
 
@@ -51,10 +53,8 @@ export default function PrivacyPage() {
               <section>
                 <h2 className="font-display text-xl font-medium text-warm-900">Cookies</h2>
                 <p className="mt-3 text-body">
-                  We use a single functional cookie (&quot;gate_passed&quot;) to remember that you
-                  have completed our age verification process. This cookie expires after 30
-                  days and contains no personal information. We do not use tracking cookies
-                  for advertising purposes.
+                  We do not use tracking cookies for advertising purposes. Any cookies set by
+                  the site are functional only and contain no personal information.
                 </p>
               </section>
 

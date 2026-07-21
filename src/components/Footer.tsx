@@ -1,8 +1,25 @@
 import Link from 'next/link'
+import NewsletterSignup from '@/components/NewsletterSignup'
 
 export default function Footer() {
   return (
     <footer className="border-t border-warm-200 bg-white">
+      {/* Newsletter */}
+      <div className="border-b border-warm-200 bg-warm-50">
+        <div className="container-wide py-12">
+          <div className="mx-auto max-w-xl text-center">
+            <h3 className="font-display text-2xl font-semibold text-warm-900">
+              New protocols, straight to your inbox
+            </h3>
+            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-warm-800/60">
+              We&apos;ll let you know when we publish a new protocol or research
+              breakdown. Nothing else.
+            </p>
+            <NewsletterSignup source="footer" className="mt-6 text-left" />
+          </div>
+        </div>
+      </div>
+
       <div className="container-wide py-12 sm:py-16">
         <div className="grid gap-10 sm:gap-12 md:grid-cols-4">
           {/* Brand */}

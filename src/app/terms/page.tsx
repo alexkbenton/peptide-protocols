@@ -31,8 +31,8 @@ export default function TermsPage() {
                 <h2 className="font-display text-xl font-medium text-warm-900">Age Requirement</h2>
                 <p className="mt-3 text-body">
                   You must be at least 18 years of age to access and use this Site. By
-                  confirming your age at our verification gate, you represent and warrant
-                  that you are 18 years of age or older.
+                  using the Site, you represent and warrant that you are 18 years of age
+                  or older.
                 </p>
               </section>
 

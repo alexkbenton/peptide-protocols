@@ -3,7 +3,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { getKnowledgeBase, getCompoundsByGoals, getKnowledgeBaseForContext } from '@/lib/knowledge-base'
 
 /**
- * Generated protocol response — used by generate-pdf and send-protocol-email
+ * Generated protocol response — used by generate-pdf
  */
 export interface GeneratedProtocol {
   title: string

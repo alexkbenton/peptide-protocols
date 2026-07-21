@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useReducer, ReactNode } from 'react'
-import { ChevronLeft, ChevronRight, Download, Mail, RotateCcw, Sparkles, Beaker, FlaskConical, Microscope, AlertCircle, CheckCircle } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Download, RotateCcw, Sparkles, Beaker, FlaskConical, Microscope, AlertCircle, CheckCircle } from 'lucide-react'
+import NewsletterSignup from '@/components/NewsletterSignup'
 
 // Types
 interface FormData {
@@ -34,8 +35,6 @@ interface FormData {
   geneticVariants?: string
   healthHistory?: string
 
-  // Step 8: Email
-  email?: string
 }
 
 interface ProtocolResult {
@@ -270,24 +269,6 @@ export default function ProtocolWizard() {
       window.URL.revokeObjectURL(url)
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: 'Failed to download PDF. Please try again.' })
-    }
-  }
-
-  const handleEmailProtocol = async () => {
-    if (!state.protocol || !state.formData.email) return
-    try {
-      const response = await fetch('/api/send-protocol-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: state.formData.email,
-          protocol: state.protocol,
-        }),
-      })
-      if (!response.ok) throw new Error('Failed to send email')
-      alert('Protocol sent to your email!')
-    } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: 'Failed to send email. Please try again.' })
     }
   }
 
@@ -1157,27 +1138,15 @@ export default function ProtocolWizard() {
               </button>
             </div>
 
-            {/* Email Option — shown after protocol */}
+            {/* Newsletter opt-in — shown after protocol */}
             <div className="card bg-white p-6 mb-8">
-              <h3 className="font-semibold text-warm-900 mb-2">Want a copy emailed to you?</h3>
-              <div className="flex gap-3">
-                <input
-                  type="email"
-                  value={state.formData.email || ''}
-                  onChange={(e) => dispatch({ type: 'UPDATE_FORM', payload: { email: e.target.value || undefined } })}
-                  placeholder="your@email.com"
-                  className="flex-1 px-4 py-3 border border-warm-200 rounded-lg font-sans text-gray-700 placeholder-gray-400 focus:outline-none focus:border-sage-600 focus:ring-1 focus:ring-sage-600"
-                />
-                <button
-                  onClick={handleEmailProtocol}
-                  disabled={!state.formData.email}
-                  className="btn-secondary flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <Mail className="w-4 h-4" />
-                  Send
-                </button>
-              </div>
-              <p className="text-xs text-warm-500 mt-2">We&apos;ll send your protocol and never spam you.</p>
+              <h3 className="font-semibold text-warm-900 mb-1">
+                Get notified when we release new protocols
+              </h3>
+              <p className="text-sm text-warm-800/60 mb-4">
+                We publish new evidence-based protocols and research breakdowns regularly.
+              </p>
+              <NewsletterSignup source="protocol-wizard" />
             </div>
 
             <div className="text-center">
