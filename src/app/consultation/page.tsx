@@ -136,7 +136,7 @@ export default function ConsultationPage() {
               ))}
             </ol>
             <p className="mt-6 border-t border-sage-200 pt-4 text-xs leading-relaxed text-warm-800/60">
-              Your {CONSULT_DURATION} call includes 10% off your first order at{' '}
+              Your call includes 10% off your first order at{' '}
               <a
                 href="https://www.forgeamino.com"
                 target="_blank"
