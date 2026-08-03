@@ -41,12 +41,32 @@ export default function CalendlyEmbed({
 
     function init() {
       const Calendly = (window as unknown as { Calendly?: {
-        initInlineWidget: (opts: { url: string; parentElement: HTMLElement }) => void
+        initInlineWidget: (opts: {
+          url: string
+          parentElement: HTMLElement
+          resize?: boolean
+        }) => void
       } }).Calendly
       if (!Calendly || !container) return
       container.innerHTML = '' // guard against double-init in React strict mode
-      Calendly.initInlineWidget({ url, parentElement: container })
+      // resize:true makes the booking page post its content height to us, so the
+      // container grows instead of trapping the calendar in an inner scrollbar.
+      Calendly.initInlineWidget({ url, parentElement: container, resize: true })
     }
+
+    // Belt and braces: apply the height Calendly reports directly. resize:true
+    // handles this on its own in most cases, but the listener also covers the
+    // step-to-step growth as an invitee moves through the booking flow.
+    function onMessage(e: MessageEvent) {
+      if (typeof e.origin !== 'string' || !e.origin.includes('calendly.com')) return
+      const data = e.data as { event?: string; payload?: { height?: string | number } }
+      if (data?.event !== 'calendly.page_height') return
+      const height = data.payload?.height
+      if (!height || !container) return
+      container.style.height = typeof height === 'number' ? `${height}px` : height
+    }
+
+    window.addEventListener('message', onMessage)
 
     const existing = document.querySelector<HTMLScriptElement>(
       'script[src*="calendly.com/assets/external/widget.js"]'
@@ -63,6 +83,7 @@ export default function CalendlyEmbed({
     }
 
     return () => {
+      window.removeEventListener('message', onMessage)
       if (container) container.innerHTML = ''
     }
   }, [url])
