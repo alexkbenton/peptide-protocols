@@ -25,7 +25,10 @@ export default function HomePage() {
             and the science behind modern wellness — all in one place.
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Link href="/protocols" className="btn-primary">
+            <Link href="/consultation" className="btn-primary">
+              Book a Consult
+            </Link>
+            <Link href="/protocols" className="btn-secondary">
               Explore Protocols
             </Link>
             <Link href="/videos" className="btn-secondary">
