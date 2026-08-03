@@ -1,7 +1,7 @@
 export interface Video {
   id: string
   title: string
-  description: string
+  description?: string // optional — the card omits the blurb entirely when unset
   wistiaId: string // Wistia video hash ID (from your Wistia media URL)
   category: VideoCategory
   duration?: string // e.g. "12:34"
@@ -41,11 +41,9 @@ export const videos: Video[] = [
   // ── Peptide Basics ──────────────────────────
   {
     id: 'basics-1',
-    title: 'Peptides: Approachable Basics',
-    description: 'A beginner-friendly introduction to peptides — what they are, how they work, and why they matter for your health.',
-    wistiaId: 'gxdkvzle46',
+    title: 'Getting Started with Peptides',
+    wistiaId: '0b3fmad9y0',
     category: 'Peptide Basics',
-    startTime: 3,
   },
 
   // ── Gut Health & Recovery ───────────────────

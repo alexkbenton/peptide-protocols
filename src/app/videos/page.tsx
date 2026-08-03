@@ -107,9 +107,11 @@ export default function VideosPage() {
                               </span>
                             )}
                           </div>
-                          <p className="mt-2 text-sm leading-relaxed text-warm-800/60">
-                            {video.description}
-                          </p>
+                          {video.description && (
+                            <p className="mt-2 text-sm leading-relaxed text-warm-800/60">
+                              {video.description}
+                            </p>
+                          )}
                         </div>
                       </div>
                     ))}
