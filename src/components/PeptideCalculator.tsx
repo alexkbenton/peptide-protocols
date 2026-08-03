@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { peptides } from '@/data/peptides'
 import {
@@ -153,15 +153,17 @@ export default function PeptideCalculator() {
   const blendResults = useMemo(() => {
     const ml = Number(blendBacMl) || 0
     const target = components[blendTargetIdx]
+    const targetMg = Number(target?.mg) || 0
     const blendTargetDoseMcg = toMcg(Number(blendTargetDoseValue) || 0, blendTargetDoseUnit)
-    if (!target || ml <= 0 || target.mg <= 0 || blendTargetDoseMcg <= 0) return null
-    const targetConcentration = (target.mg * 1000) / ml
+    if (!target || ml <= 0 || targetMg <= 0 || blendTargetDoseMcg <= 0) return null
+    const targetConcentration = (targetMg * 1000) / ml
     const volumePerDoseMl = blendTargetDoseMcg / targetConcentration
     const unitsToDraw = volumePerDoseMl * 100
     const breakdown = components.map((c) => {
-      const concentration = (Number(c.mg) * 1000) / ml
+      const cMg = Number(c.mg) || 0
+      const concentration = (cMg * 1000) / ml
       const deliveredMcg = concentration * volumePerDoseMl
-      const dosesPerVial = (Number(c.mg) * 1000) / deliveredMcg
+      const dosesPerVial = (cMg * 1000) / deliveredMcg
       return {
         ...c,
         concentration,
@@ -418,19 +420,75 @@ function PeptideSelect({
   )
 }
 
+/**
+ * Text-backed numeric input.
+ *
+ * Storing only a number and doing `parseFloat(x) || 0` on every keystroke means
+ * an empty field snaps back to "0", so the next digits typed end up appended to
+ * it ("040"), and a trailing decimal point ("0.") gets eaten before you can type
+ * the fraction. Keeping the raw text locally while editing avoids both. The
+ * number is still what flows out via onChange (NaN when the field is empty), and
+ * the text is re-normalized from the number on blur.
+ */
+const numToText = (n: number) => (Number.isFinite(n) ? String(n) : '')
+
+function NumericInput({
+  value,
+  onChange,
+  min = 0,
+  className,
+  ariaLabel,
+}: {
+  value: number
+  onChange: (v: number) => void
+  min?: number
+  className?: string
+  ariaLabel?: string
+}) {
+  const [text, setText] = useState(() => numToText(value))
+  const [editing, setEditing] = useState(false)
+
+  // Reflect external changes (presets, mode switches) unless the user is typing
+  useEffect(() => {
+    if (!editing) setText(numToText(value))
+  }, [value, editing])
+
+  return (
+    <input
+      type="text"
+      inputMode="decimal"
+      aria-label={ariaLabel}
+      value={text}
+      onFocus={() => setEditing(true)}
+      onBlur={() => {
+        setEditing(false)
+        setText(numToText(value))
+      }}
+      onChange={(e) => {
+        const raw = e.target.value
+        // Allow digits, a single decimal point, and an empty field
+        if (raw !== '' && !/^\d*\.?\d*$/.test(raw)) return
+        setText(raw)
+        const parsed = parseFloat(raw)
+        if (!Number.isFinite(parsed)) onChange(NaN)
+        else onChange(Math.max(min, parsed))
+      }}
+      className={className}
+    />
+  )
+}
+
 function NumberField({
   label,
   value,
   onChange,
   unit,
-  step = 0.1,
   min = 0,
 }: {
   label: string
   value: number
   onChange: (v: number) => void
   unit: string
-  step?: number
   min?: number
 }) {
   return (
@@ -439,13 +497,11 @@ function NumberField({
         {label}
       </label>
       <div className="relative">
-        <input
-          type="number"
-          inputMode="decimal"
-          value={Number.isFinite(value) ? value : ''}
-          step={step}
+        <NumericInput
+          value={value}
+          onChange={onChange}
           min={min}
-          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+          ariaLabel={label}
           className="w-full rounded-lg border border-warm-200 bg-white px-3 py-2.5 pr-12 text-sm text-warm-900 focus:border-sage-500 focus:outline-none focus:ring-2 focus:ring-sage-200"
         />
         <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-medium text-warm-800/50">
@@ -471,7 +527,6 @@ function DoseField({
   setUnit: (u: DoseUnit) => void
   min?: number
 }) {
-  const step = unit === 'mg' ? 0.1 : 10
   return (
     <div>
       <div className="mb-1.5 flex items-center justify-between gap-2">
@@ -497,13 +552,11 @@ function DoseField({
         </div>
       </div>
       <div className="relative">
-        <input
-          type="number"
-          inputMode="decimal"
-          value={Number.isFinite(value) ? value : ''}
-          step={step}
+        <NumericInput
+          value={value}
+          onChange={onChange}
           min={min}
-          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+          ariaLabel={`${label} in ${unit}`}
           className="w-full rounded-lg border border-warm-200 bg-white px-3 py-2.5 pr-12 text-sm text-warm-900 focus:border-sage-500 focus:outline-none focus:ring-2 focus:ring-sage-200"
         />
         <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-medium text-warm-800/50">
@@ -588,20 +641,8 @@ function SingleInputs({
         <PeptideSelect value={slug} onChange={setSlug} options={peptideOptions} />
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
-        <NumberField
-          label="Amount in vial (COA)"
-          value={mg}
-          onChange={setMg}
-          unit="mg"
-          step={0.5}
-        />
-        <NumberField
-          label="BAC water added"
-          value={bacMl}
-          onChange={setBacMl}
-          unit="mL"
-          step={0.1}
-        />
+        <NumberField label="Amount in vial (COA)" value={mg} onChange={setMg} unit="mg" />
+        <NumberField label="BAC water added" value={bacMl} onChange={setBacMl} unit="mL" />
         <DoseField
           label="Desired dose"
           value={doseValue}
@@ -737,15 +778,11 @@ function BlendInputs({
               </div>
               <div className="w-24">
                 <div className="relative">
-                  <input
-                    type="number"
-                    inputMode="decimal"
+                  <NumericInput
+                    key={c.id}
                     value={c.mg}
-                    step={0.5}
-                    min={0}
-                    onChange={(e) =>
-                      updateComponent(c.id, { mg: parseFloat(e.target.value) || 0 })
-                    }
+                    onChange={(mg) => updateComponent(c.id, { mg })}
+                    ariaLabel="Amount in vial in mg"
                     className="w-full rounded-lg border border-warm-200 bg-white px-3 py-2.5 pr-8 text-sm text-warm-900 focus:border-sage-500 focus:outline-none focus:ring-2 focus:ring-sage-200"
                   />
                   <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-xs text-warm-800/50">
@@ -771,13 +808,7 @@ function BlendInputs({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <NumberField
-          label="BAC water added"
-          value={bacMl}
-          onChange={setBacMl}
-          unit="mL"
-          step={0.1}
-        />
+        <NumberField label="BAC water added" value={bacMl} onChange={setBacMl} unit="mL" />
         <DoseField
           label="Target dose"
           value={targetDoseValue}
