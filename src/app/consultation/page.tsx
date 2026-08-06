@@ -12,16 +12,16 @@ export const metadata: Metadata = {
 const CALENDLY_URL = process.env.NEXT_PUBLIC_CALENDLY_URL
 
 // ──────────────────────────────────────────────
-// Fill these in to show pricing and payment details on the page.
-// Both are optional: the payment step falls back to generic wording
-// while they're blank, so nothing wrong or half-filled ships publicly.
-//   VENMO_HANDLE — your Venmo *business profile* handle, e.g. '@Peptide-Protocols'
-//   CONSULT_PRICE — displayed as-is, e.g. '$150'
+// Pricing and payment details shown on the page.
+//   VENMO_HANDLE — intentionally blank: we send payment details privately
+//     after booking rather than publishing the handle. Setting it to a
+//     handle like '@Example' switches step 2 to name it on the page.
+//   CONSULT_PRICE — displayed as-is, e.g. '$99'
 // ──────────────────────────────────────────────
-const VENMO_HANDLE = '@ForgeA'
+const VENMO_HANDLE = ''
 const CONSULT_PRICE = '$99'
 const CONSULT_DURATION = '45 minutes'
-const CONSULT_PERK = '10% off your first Forge Amino order'
+const CONSULT_PERK = '15% off your first Forge Amino order'
 
 const howItWorks = [
   {
@@ -34,7 +34,7 @@ const howItWorks = [
     title: CONSULT_PRICE ? `Send payment (${CONSULT_PRICE})` : 'Send payment',
     body: VENMO_HANDLE
       ? `Payment is due before the call. Send it via Venmo to ${VENMO_HANDLE} and include your name so we can match it to your booking.`
-      : 'Payment is due before the call. Payment details are included in your booking confirmation email.',
+      : 'Once you book, we’ll send you Venmo payment details. Payment is due before the call.',
   },
   {
     step: '3',
@@ -136,7 +136,7 @@ export default function ConsultationPage() {
               ))}
             </ol>
             <p className="mt-6 border-t border-sage-200 pt-4 text-xs leading-relaxed text-warm-800/60">
-              Your call includes 10% off your first order at{' '}
+              Your call includes 15% off your first order at{' '}
               <a
                 href="https://www.forgeamino.com"
                 target="_blank"
