@@ -32,23 +32,6 @@ export function generateStaticParams() {
   }))
 }
 
-// Map peptide slugs to their Forge Amino product pages
-const forgeAminoProducts: Record<string, { url: string; label: string }> = {
-  'bpc-157':      { url: 'https://www.forgeamino.com/shop/p/bpc-157',              label: 'BPC-157 10MG' },
-  'tb-500':       { url: 'https://www.forgeamino.com/shop/p/tb-500',               label: 'TB-500 10MG' },
-  'ghk-cu':       { url: 'https://www.forgeamino.com/shop/p/ghk-cu',               label: 'GHK-Cu 50MG' },
-  'ipamorelin':   { url: 'https://www.forgeamino.com/shop/p/ipamorelin',           label: 'Ipamorelin 10MG' },
-  'cjc-1295':     { url: 'https://www.forgeamino.com/shop/p/cjc1295nodac-ipamorelin', label: 'CJC-1295 / Ipamorelin Blend' },
-  'tesamorelin':  { url: 'https://www.forgeamino.com/shop/p/tesamorelin',          label: 'Tesamorelin 10MG' },
-  'epithalon':    { url: 'https://www.forgeamino.com/shop/p/epithalon-50mg',       label: 'Epithalon 50MG' },
-  'pinealon':     { url: 'https://www.forgeamino.com/shop/p/pinealon-20mg',        label: 'Pinealon 20MG' },
-  'mots-c':       { url: 'https://www.forgeamino.com/shop/p/mots-c',               label: 'MOTS-C 10MG' },
-  '5-amino-1mq':  { url: 'https://www.forgeamino.com/shop/p/5-amino-1mq',         label: '5-Amino-1MQ' },
-  'slu-pp-332':   { url: 'https://www.forgeamino.com/shop/p/slu-pp-332',          label: 'SLU-PP-332' },
-  'retatrutide':  { url: 'https://www.forgeamino.com/lab',                        label: 'Retatrutide' },
-  'tirzepatide':  { url: 'https://www.forgeamino.com/lab',                        label: 'Tirzepatide' },
-}
-
 export default function PeptidePage({ params }: { params: { slug: string } }) {
   const peptide = getPeptideBySlug(params.slug)
 
@@ -128,30 +111,6 @@ export default function PeptidePage({ params }: { params: { slug: string } }) {
               </div>
             )}
           </div>
-
-          {/* Forge Amino sourcing CTA */}
-          {forgeAminoProducts[peptide.slug] && (
-            <div className="mt-8 animate-fade-in-up rounded-2xl border border-sage-200 bg-sage-50/50 p-6">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-xs font-semibold tracking-[0.15em] text-sage-600 uppercase">
-                    Available on Forge Amino
-                  </p>
-                  <p className="mt-1 text-sm text-warm-800/70">
-                    {forgeAminoProducts[peptide.slug].label} — independently lab tested, 99%+ purity, QR-linked COA.
-                  </p>
-                </div>
-                <a
-                  href={forgeAminoProducts[peptide.slug].url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="shrink-0 rounded-full bg-sage-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-sage-700"
-                >
-                  Source this compound →
-                </a>
-              </div>
-            </div>
-          )}
 
           {/* Divider */}
           <hr className="my-10 border-warm-200" />

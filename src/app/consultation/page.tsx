@@ -21,7 +21,7 @@ const CALENDLY_URL = process.env.NEXT_PUBLIC_CALENDLY_URL
 const VENMO_HANDLE = ''
 const CONSULT_PRICE = '$99'
 const CONSULT_DURATION = '45 minutes'
-const CONSULT_PERK = '15% off your first Forge Amino order'
+const CONSULT_PERK = ''
 
 const howItWorks = [
   {
@@ -136,18 +136,8 @@ export default function ConsultationPage() {
               ))}
             </ol>
             <p className="mt-6 border-t border-sage-200 pt-4 text-xs leading-relaxed text-warm-800/60">
-              Your call includes 15% off your first order at{' '}
-              <a
-                href="https://www.forgeamino.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium text-sage-700 underline-offset-4 hover:underline"
-              >
-                forgeamino.com
-              </a>{' '}
-              — we&apos;ll cover the details before we wrap up. Your time slot is
-              held once payment is received. If you need to reschedule or cancel,
-              use the links in your confirmation email.
+              Your time slot is held once payment is received. If you need to
+              reschedule or cancel, use the links in your confirmation email.
             </p>
           </div>
         </div>

@@ -15,7 +15,7 @@ export default function OptimalFatMuscleContent() {
       <Section title="Compounds in This Protocol">
         <div className="my-6 grid gap-3 sm:grid-cols-2">
           {[
-            'Retatrutide', 'CJC-1295 no DAC / Ipamorelin', 'GLOW (GHK-Cu/BPC-157/TB-500)',
+            'CJC-1295 no DAC / Ipamorelin', 'GLOW (GHK-Cu/BPC-157/TB-500)',
             'SS-31 (Elamipretide)', 'MOTS-C', '5-Amino-1MQ', 'SLU-PP-332',
             'NAD+ (or NMN or Niacin)', 'L-Carnitine', 'Creatine Monohydrate', 'Tadalafil', 'Protein'
           ].map((item, i) => (
@@ -28,19 +28,7 @@ export default function OptimalFatMuscleContent() {
       </Section>
 
       <Section title="Dosing Protocol Summary">
-        <SubSection title="1. Retatrutide">
-          <P>
-            A triple agonist that activates GIP, GLP-1, and GCG receptors, aiding in appetite reduction, metabolism enhancement, and liver fat metabolism. Phase 2 trials reported up to 24.2% mean weight loss at 48 weeks.
-          </P>
-          <OptionCard title="Conservative Approach">
-            <P>Start with 1 mg/week for four weeks, then increase 0.5 mg per week for 4 weeks up to effective dose. Example: weeks 1&ndash;4: 1 mg/week, weeks 5&ndash;8: 1.5 mg/week, weeks 9&ndash;12: 2 mg/week. Optimal dose: 2&ndash;8 mg/week.</P>
-          </OptionCard>
-          <OptionCard title="Aggressive Approach">
-            <P>Start with 2 mg/week and increase each 4 weeks by 0.5&ndash;1 mg up to optimal dose of 4&ndash;12 mg/week.</P>
-          </OptionCard>
-        </SubSection>
-
-        <SubSection title="2. CJC-1295 No DAC with Ipamorelin">
+        <SubSection title="1. CJC-1295 No DAC with Ipamorelin">
           <Warning>
             DO NOT TAKE CJC-1295/IPA, Tesamorelin, GHRP-6, GHRP-2, Sermorelin, IGF-LR3, HGH, or ANY growth hormone secretagogues if you have a history of cancer.
           </Warning>
@@ -61,7 +49,7 @@ export default function OptimalFatMuscleContent() {
           </Note>
         </SubSection>
 
-        <SubSection title="3. GLOW (GHK-Cu 50mg / BPC-157 10mg / TB-500 10mg Blend)">
+        <SubSection title="2. GLOW (GHK-Cu 50mg / BPC-157 10mg / TB-500 10mg Blend)">
           <P>
             A coordinated regenerative blend: <Strong>GHK-Cu</Strong> functions as a gene-regulatory peptide stimulating collagen and elastin synthesis. <Strong>BPC-157</Strong> acts as a cytoprotective tissue-repair agent. <Strong>TB-500</Strong> serves as a cytoskeletal and inflammation-regulating peptide.
           </P>
@@ -72,7 +60,7 @@ export default function OptimalFatMuscleContent() {
           ]} />
         </SubSection>
 
-        <SubSection title="4. SS-31 (Elamipretide)">
+        <SubSection title="3. SS-31 (Elamipretide)">
           <P>
             Targets mitochondrial health by selectively binding to cardiolipin in the inner mitochondrial membrane, stabilizing cristae structure and enhancing ATP production. SS-31 is considered the &ldquo;mechanic&rdquo; of the mitochondria &mdash; many researchers recommend starting this peptide first to repair structural damage before adding other mitochondrial compounds.
           </P>
@@ -82,7 +70,7 @@ export default function OptimalFatMuscleContent() {
           ]} />
         </SubSection>
 
-        <SubSection title="5. MOTS-C">
+        <SubSection title="4. MOTS-C">
           <P>
             A mitochondria-derived peptide that regulates metabolism and prevents muscle wasting through multiple signaling pathways including AMPK activation, enhanced glucose uptake, and fatty acid oxidation.
           </P>
@@ -96,7 +84,7 @@ export default function OptimalFatMuscleContent() {
           </Note>
         </SubSection>
 
-        <SubSection title="6. 5-Amino-1MQ">
+        <SubSection title="5. 5-Amino-1MQ">
           <P>
             Inhibits NNMT (nicotinamide N-methyltransferase) to increase NAD+ levels, promoting fat oxidation and muscle repair.
           </P>
@@ -108,7 +96,7 @@ export default function OptimalFatMuscleContent() {
           ]} />
         </SubSection>
 
-        <SubSection title="7. SLU-PP-332">
+        <SubSection title="6. SLU-PP-332">
           <P>
             A novel compound that mimics exercise effects by activating ERRs (estrogen-related receptors), enhancing mitochondrial biogenesis and energy metabolism.
           </P>
@@ -120,7 +108,7 @@ export default function OptimalFatMuscleContent() {
           </Warning>
         </SubSection>
 
-        <SubSection title="8. NAD+ (or NMN or Niacin)">
+        <SubSection title="7. NAD+ (or NMN or Niacin)">
           <P>
             Essential cofactor for energy metabolism, cellular function, and longevity.
           </P>
@@ -135,7 +123,7 @@ export default function OptimalFatMuscleContent() {
           </OptionCard>
         </SubSection>
 
-        <SubSection title="9. L-Carnitine">
+        <SubSection title="8. L-Carnitine">
           <P>
             Facilitates fatty acid transport into mitochondria for energy production, enhancing exercise performance.
           </P>
@@ -145,19 +133,19 @@ export default function OptimalFatMuscleContent() {
           ]} />
         </SubSection>
 
-        <SubSection title="10. Creatine Monohydrate">
+        <SubSection title="9. Creatine Monohydrate">
           <P>
             Increases phosphocreatine stores to support high-intensity exercise and muscle growth. 5&ndash;10 grams dissolved in water daily.
           </P>
         </SubSection>
 
-        <SubSection title="11. Tadalafil">
+        <SubSection title="10. Tadalafil">
           <P>
             Beyond erectile function, it improves vascular health, blood flow, and muscle performance through PDE5 inhibition. 5 mg oral daily.
           </P>
         </SubSection>
 
-        <SubSection title="12. Protein">
+        <SubSection title="11. Protein">
           <P>
             1 g per pound of body weight per day.
           </P>

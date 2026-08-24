@@ -19,7 +19,7 @@ export const protocols: Protocol[] = [
     title: 'Optimal Fat-Burning, Lean Muscle & Mitochondrial Health Protocol',
     category: 'Body Composition',
     summary: 'A comprehensive 11-compound protocol for fat loss, lean muscle building, and mitochondrial optimization using peptides and small molecules.',
-    compounds: ['Retatrutide', 'CJC-1295/Ipamorelin', 'GLOW Blend', 'SS-31', 'MOTS-C', '5-Amino-1MQ', 'SLU-PP-332', 'NAD+', 'L-Carnitine', 'Creatine', 'Tadalafil'],
+    compounds: ['CJC-1295/Ipamorelin', 'GLOW Blend', 'SS-31', 'MOTS-C', '5-Amino-1MQ', 'SLU-PP-332', 'NAD+', 'L-Carnitine', 'Creatine', 'Tadalafil'],
   },
   {
     slug: 'growth-hormone-release',

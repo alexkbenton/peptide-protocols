@@ -18,7 +18,7 @@ export type VideoCategory =
 export const categoryDescriptions: Record<VideoCategory, string> = {
   'Peptide Basics': 'Foundational knowledge — what peptides are, how they work, and what the research says.',
   'Gut Health & Recovery': 'Protocols and science behind BPC-157, KPV, and other gut-healing peptides.',
-  'Body Composition & Performance': 'GH secretagogues, Retatrutide, and peptides for fat loss, muscle, and metabolism.',
+  'Body Composition & Performance': 'GH secretagogues and peptides for fat loss, muscle, and metabolism.',
   'Cellular Repair & Longevity': 'NAD+, Epithalon, SS-31, and the frontier of cellular optimization.',
   'Administration & Safety': 'Reconstitution, injection technique, dosing, storage, and safety essentials.',
 }

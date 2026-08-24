@@ -7,7 +7,6 @@ import {
   Beaker,
   Calculator,
   Droplets,
-  ExternalLink,
   Info,
   Plus,
   Syringe,
@@ -314,22 +313,9 @@ export default function PeptideCalculator() {
             )}
           </div>
 
-          {/* Forge Amino CTA */}
-          <div className="mt-6 rounded-2xl border border-sage-200 bg-sage-50 p-5">
-            <p className="text-sm text-warm-800/80">
-              Need peptides?{' '}
-              <strong className="text-warm-900">Source from Forge Amino.</strong>{' '}
-              <a
-                href="https://www.forgeamino.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 font-medium text-sage-700 underline-offset-4 hover:underline"
-              >
-                forgeamino.com <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-            </p>
-            {mode === 'single' && selectedSinglePeptide && (
-              <p className="mt-2 text-sm text-warm-800/70">
+          {mode === 'single' && selectedSinglePeptide && (
+            <div className="mt-6 rounded-2xl border border-sage-200 bg-sage-50 p-5">
+              <p className="text-sm text-warm-800/70">
                 Dosing details for <strong>{selectedSinglePeptide.name}</strong>?{' '}
                 <Link
                   href={`/peptides/${selectedSinglePeptide.slug}`}
@@ -338,8 +324,8 @@ export default function PeptideCalculator() {
                   Research dosing guidelines →
                 </Link>
               </p>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Results */}

@@ -351,7 +351,7 @@ Based on 72-week SURMOUNT-1 trial outcomes:
 
 ### NOT Recommended: Tirzepatide + Other GIP/GLP-1 Agonists
 
-- **Redundancy:** Retatrutide (triple GIP/GLP-1/glucagon agonist, under development) or other dual/triple agonists should not be combined with tirzepatide
+- **Redundancy:** Other dual or triple GIP/GLP-1/glucagon agonists (under development) should not be combined with tirzepatide
 - **Excessive agonism:** Would excessively activate the same receptors without additive benefit
 - **Recommendation:** Choose one agent; do not stack
 

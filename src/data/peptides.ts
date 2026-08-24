@@ -264,55 +264,6 @@ export const peptides: Peptide[] = [
 
   // Fat Loss & Metabolism
   {
-    slug: 'retatrutide',
-    name: 'Retatrutide',
-    aliases: ['LY3437943', 'Triple Agonist GIP/GLP-1/Glucagon'],
-    category: 'Fat Loss & Metabolism',
-    categoryColor: 'bg-orange-50 text-orange-700',
-    summary: 'A triple hormone receptor agonist (GIP/GLP-1/Glucagon) that produces 24% weight loss through synergistic appetite suppression and thermogenesis.',
-    routes: ['Subcutaneous'],
-    evidenceLevel: 'emerging',
-    dosing: {
-      beginnerIntermediate: {
-        dose: '1-4 mg',
-        frequency: 'Once weekly subcutaneous',
-        cycleWeeks: '12+ weeks with dose escalation',
-        notes: 'Start at 1 mg, escalate gradually (~0.5-1 mg) every 4 weeks'
-      },
-      advanced: {
-        dose: '8-12 mg',
-        frequency: 'Once weekly subcutaneous',
-        cycleWeeks: '24-48 weeks',
-        notes: 'Maintenance at 12 mg achieves maximum weight loss'
-      }
-    },
-    mechanism: 'Activates three complementary energy pathways: GIPR reduces appetite and modulates lipolysis; GLP-1R delays gastric emptying and increases satiety; GCGR increases hepatic glucose production and brown adipose tissue thermogenesis.',
-    benefits: [
-      '24% average weight loss (52 lbs / 24 kg)',
-      'Superior lean mass preservation vs GLP-1 alone',
-      'Enhanced HbA1c reduction in diabetics',
-      'Improved triglycerides and lipid profile',
-      'Increased resting energy expenditure'
-    ],
-    sideEffects: [
-      'Nausea (25-35% during escalation phase)',
-      'Vomiting (8-12%)',
-      'Diarrhea (15-20%)',
-      'Constipation (10-15%)',
-      'Most resolve by weeks 2-4 at each dose'
-    ],
-    contraindications: [
-      'Personal or family history of medullary thyroid carcinoma',
-      'MEN2 syndromes',
-      'History of acute or chronic pancreatitis',
-      'Type 1 diabetes (relative)',
-      'Diabetic ketoacidosis history',
-      'End-stage renal disease'
-    ],
-    synergies: ['Metformin', 'Exercise', 'High-protein diet', 'Structured resistance training'],
-    keyTakeaway: 'Amplify weight loss with triple mechanism: Retatrutide activates appetite suppression, fat breakdown, and thermogenesis simultaneously.'
-  },
-  {
     slug: 'tirzepatide',
     name: 'Tirzepatide',
     aliases: ['Mounjaro', 'Zepbound', 'Dual GIP/GLP-1 Agonist'],
