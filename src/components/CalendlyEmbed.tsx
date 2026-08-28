@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { reportConversion } from '@/lib/gtag'
 
 interface CalendlyEmbedProps {
   /** Full Calendly scheduling URL, e.g. https://calendly.com/your-name/consultation */
@@ -60,6 +61,10 @@ export default function CalendlyEmbed({
     function onMessage(e: MessageEvent) {
       if (typeof e.origin !== 'string' || !e.origin.includes('calendly.com')) return
       const data = e.data as { event?: string; payload?: { height?: string | number } }
+      if (data?.event === 'calendly.event_scheduled') {
+        reportConversion('consultationBooking')
+        return
+      }
       if (data?.event !== 'calendly.page_height') return
       const height = data.payload?.height
       if (!height || !container) return

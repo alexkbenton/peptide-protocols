@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { reportConversion } from '@/lib/gtag'
 
 type Variant = 'light' | 'dark'
 
@@ -47,6 +48,7 @@ export default function NewsletterSignup({
       setStatus('success')
       setMessage(data.message || 'You are on the list.')
       setEmail('')
+      reportConversion('newsletterSignup')
     } catch {
       setStatus('error')
       setMessage('Something went wrong. Please try again.')
