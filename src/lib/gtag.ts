@@ -11,7 +11,7 @@
 export const GA_ADS_ID = 'AW-18413887967'
 
 export const CONVERSION_LABELS = {
-  consultationBooking: '', // paste the label for the "Consultation booking" action
+  consultationBooking: '_V02CITtw-kcEN_DtsxE', // "Consultation booking" action (Google Ads)
   newsletterSignup: '',    // paste the label for the "Newsletter signup" action
 } as const
 

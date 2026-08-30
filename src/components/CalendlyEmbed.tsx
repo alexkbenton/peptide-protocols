@@ -62,7 +62,7 @@ export default function CalendlyEmbed({
       if (typeof e.origin !== 'string' || !e.origin.includes('calendly.com')) return
       const data = e.data as { event?: string; payload?: { height?: string | number } }
       if (data?.event === 'calendly.event_scheduled') {
-        reportConversion('consultationBooking')
+        reportConversion('consultationBooking', { value: 1.0, currency: 'USD' })
         return
       }
       if (data?.event !== 'calendly.page_height') return
