@@ -66,7 +66,7 @@ export default function RootLayout({
         />
       </head>
       <body className="font-sans">
-        {/* Google tag (gtag.js) — Google Ads AW-18413887967 + AW-18415687827 */}
+        {/* Google tag (gtag.js) — Google Ads AW-18413887967 */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=AW-18413887967"
           strategy="afterInteractive"
@@ -75,8 +75,7 @@ export default function RootLayout({
           {`window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
-          gtag('config', 'AW-18413887967');
-          gtag('config', 'AW-18415687827');`}
+          gtag('config', 'AW-18413887967');`}
         </Script>
         {children}
       </body>
