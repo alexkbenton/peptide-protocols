@@ -185,3 +185,61 @@ export function getKnowledgeBaseForContext(compoundNames?: string[]): string {
 
   return formatted
 }
+
+/**
+ * Full detail for the compounds that actually matter to this request.
+ * Relevant compounds deserve MORE detail than the rest, not a 300-char preview.
+ */
+export function getDetailedDocs(compoundNames: string[]): string {
+  const entries = getCompoundDocs(compoundNames)
+  if (entries.length === 0) return 'No directly matching compounds found.'
+
+  let formatted = '# PRIMARY COMPOUNDS (full detail)\n\n'
+  for (const entry of entries) {
+    formatted += `## ${entry.compound}\n\n`
+    if (entry.frontmatter.category) formatted += `**Category:** ${entry.frontmatter.category}\n`
+    if (entry.frontmatter.typical_dose_mcg) {
+      formatted += `**Typical Dose:** ${entry.frontmatter.typical_dose_mcg} mcg\n`
+    }
+    if (entry.frontmatter.dose_range_mcg) {
+      const [min, max] = entry.frontmatter.dose_range_mcg
+      formatted += `**Dose Range:** ${min}-${max} mcg\n`
+    }
+    if (entry.frontmatter.routes) {
+      formatted += `**Routes:** ${safeJoin(entry.frontmatter.routes, ', ')}\n`
+    }
+    if (entry.frontmatter.cycle_weeks) {
+      const [min, max] = entry.frontmatter.cycle_weeks
+      formatted += `**Cycle Length:** ${min}-${max} weeks\n`
+    }
+    if (entry.frontmatter.evidence_level) {
+      formatted += `**Evidence Level:** ${entry.frontmatter.evidence_level}\n`
+    }
+    if (entry.frontmatter.contraindications && entry.frontmatter.contraindications.length > 0) {
+      formatted += `**Cautions:** ${safeJoin(entry.frontmatter.contraindications, '; ')}\n`
+    }
+    formatted += `\n${entry.content.trim()}\n\n`
+  }
+  return formatted
+}
+
+/**
+ * One line per remaining compound, so the model knows what else exists and can
+ * reach for it — without paying ~70k tokens to restate the entire library.
+ */
+export function getCompoundIndex(excludeNames: string[] = []): string {
+  const exclude = new Set(excludeNames.map(n => n.toLowerCase()))
+  const rest = KNOWLEDGE_BASE_ENTRIES.filter(e => !exclude.has(e.compound.toLowerCase()))
+  if (rest.length === 0) return ''
+
+  let formatted = '# OTHER AVAILABLE COMPOUNDS (summary index)\n\n'
+  formatted += 'Use these if they fit the goals better than the primary list above.\n\n'
+  for (const entry of rest) {
+    const bits: string[] = []
+    if (entry.frontmatter.category) bits.push(String(entry.frontmatter.category))
+    if (entry.frontmatter.evidence_level) bits.push(`evidence: ${entry.frontmatter.evidence_level}`)
+    if (entry.frontmatter.routes) bits.push(safeJoin(entry.frontmatter.routes, '/'))
+    formatted += `- **${entry.compound}**${bits.length ? ` — ${bits.join('; ')}` : ''}\n`
+  }
+  return formatted + '\n'
+}

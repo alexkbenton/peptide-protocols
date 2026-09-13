@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
-import { getKnowledgeBase, getCompoundsByGoals, getKnowledgeBaseForContext } from '@/lib/knowledge-base'
+import { getCompoundsByGoals, getDetailedDocs, getCompoundIndex } from '@/lib/knowledge-base'
 
 // Comprehensive protocols (many goals, large stacks) can take 80s+ to generate.
 // Without this, Vercel cuts the function off at its short default.
@@ -34,7 +34,7 @@ export interface GeneratedProtocol {
 /**
  * Build the system prompt with knowledge base and user context
  */
-function getSystemPrompt(formData: any, relevantCompounds: string[], knowledgeBase: string): string {
+function getSystemPrompt(formData: any, relevantCompounds: string[]): string {
   // Build user context section
   const contextLines: string[] = []
   contextLines.push(`- **Goals:** ${formData.goals.join(', ')}`)
@@ -77,11 +77,9 @@ You create personalized, evidence-based peptide protocols tailored to individual
 ## User Profile
 ${contextLines.join('\n')}
 
-## Knowledge Base — Relevant Compounds
-${getKnowledgeBaseForContext(relevantCompounds)}
-
-## Full Knowledge Base
-${knowledgeBase}
+## Knowledge Base
+${getDetailedDocs(relevantCompounds)}
+${getCompoundIndex(relevantCompounds)}
 
 ## Protocol Design Requirements
 
@@ -190,12 +188,13 @@ export async function POST(req: NextRequest) {
     // Initialize Anthropic client
     const client = new Anthropic({ apiKey })
 
-    // Get relevant compounds and knowledge base
+    // Only the compounds this request actually needs get full detail; the rest
+    // are a one-line index. Sending the whole library every time cost ~70k
+    // tokens per request and pushed generation past the connection timeout.
     const relevantCompounds = getCompoundsByGoals(body.goals)
-    const knowledgeBase = getKnowledgeBase()
 
     // Build system prompt
-    const systemPrompt = getSystemPrompt(body, relevantCompounds, knowledgeBase)
+    const systemPrompt = getSystemPrompt(body, relevantCompounds)
 
     // Build user message
     const userParts: string[] = []
@@ -216,7 +215,9 @@ export async function POST(req: NextRequest) {
     const userMessage = userParts.join('\n')
 
     // Call Claude API
-    const message = await client.messages.create({
+    // Streaming keeps the connection alive. A non-streaming call for a large
+    // comprehensive protocol was timing out at ~115s with no usable error.
+    const message = await client.messages.stream({
       // Model ID is configurable so a model retirement is a Vercel env change,
       // not a code change. claude-sonnet-4-20250514 was retired 2026-06-15.
       model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-5',
@@ -230,7 +231,7 @@ export async function POST(req: NextRequest) {
           content: userMessage,
         },
       ],
-    })
+    }).finalMessage()
 
     // Extract content
     const responseContent = message.content[0]
