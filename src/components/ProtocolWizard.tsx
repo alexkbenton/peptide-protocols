@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useReducer, ReactNode } from 'react'
+import { useState, useReducer, useEffect, ReactNode } from 'react'
 import { ChevronLeft, ChevronRight, Download, RotateCcw, Sparkles, Beaker, FlaskConical, Microscope, AlertCircle, CheckCircle } from 'lucide-react'
 import NewsletterSignup from '@/components/NewsletterSignup'
 
@@ -53,10 +53,18 @@ interface ProtocolResult {
 
 type WizardStep = 'disclaimer' | 'goals' | 'priority' | 'experience' | 'lifestyle' | 'profile' | 'advanced' | 'review' | 'loading' | 'results'
 
+interface PartialProtocol {
+  title?: string
+  overview?: string
+  compounds: Array<Record<string, string>>
+  stages: string[]
+}
+
 interface WizardState {
   currentStep: WizardStep
   formData: FormData
   protocol?: ProtocolResult
+  partial?: PartialProtocol
   error?: string
   disclaimerAccepted: boolean
 }
@@ -65,6 +73,7 @@ type WizardAction =
   | { type: 'SET_STEP'; payload: WizardStep }
   | { type: 'UPDATE_FORM'; payload: Partial<FormData> }
   | { type: 'SET_PROTOCOL'; payload: ProtocolResult }
+  | { type: 'SET_PARTIAL'; payload: PartialProtocol }
   | { type: 'SET_ERROR'; payload: string }
   | { type: 'SET_DISCLAIMER_ACCEPTED'; payload: boolean }
   | { type: 'RESET' }
@@ -98,6 +107,8 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       }
     case 'SET_PROTOCOL':
       return { ...state, protocol: action.payload }
+    case 'SET_PARTIAL':
+      return { ...state, partial: action.payload }
     case 'SET_ERROR':
       return { ...state, error: action.payload }
     case 'SET_DISCLAIMER_ACCEPTED':
@@ -179,6 +190,15 @@ function getRecommendedMarkers(goals: string[]): string[] {
 
 export default function ProtocolWizard() {
   const [state, dispatch] = useReducer(wizardReducer, initialState)
+  const [elapsed, setElapsed] = useState(0)
+
+  // Elapsed time during generation. Showing it is what turns an indefinite
+  // wait into a bounded one — people abandon uncertainty, not duration.
+  useEffect(() => {
+    if (state.currentStep !== 'loading') return
+    const id = setInterval(() => setElapsed(e => e + 1), 1000)
+    return () => clearInterval(id)
+  }, [state.currentStep])
   const [showAllMarkers, setShowAllMarkers] = useState(false)
 
   const currentStepIndex = (['disclaimer', 'goals', 'priority', 'experience', 'lifestyle', 'profile', 'advanced', 'review', 'loading', 'results'] as const).indexOf(state.currentStep as any)
@@ -232,22 +252,77 @@ export default function ProtocolWizard() {
   const handleGenerateProtocol = async () => {
     dispatch({ type: 'SET_STEP', payload: 'loading' })
     dispatch({ type: 'SET_ERROR', payload: '' })
+    dispatch({ type: 'SET_PARTIAL', payload: { compounds: [], stages: [] } })
+    setElapsed(0)
+
+    const fail = (msg: string) => {
+      dispatch({ type: 'SET_ERROR', payload: msg })
+      dispatch({ type: 'SET_STEP', payload: 'review' })
+    }
+
     try {
       const response = await fetch('/api/generate-protocol', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(state.formData),
+        body: JSON.stringify({ ...state.formData, stream: true }),
       })
-      const data = await response.json()
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate protocol')
+
+      // If streaming isn't available for any reason, fall back to plain JSON
+      // rather than leaving the user on a dead loading screen.
+      const contentType = response.headers.get('Content-Type') || ''
+      if (!contentType.includes('text/event-stream') || !response.body) {
+        const data = await response.json().catch(() => ({}))
+        if (!response.ok) throw new Error(data.error || 'Failed to generate protocol')
+        dispatch({ type: 'SET_PROTOCOL', payload: data })
+        dispatch({ type: 'SET_STEP', payload: 'results' })
+        return
       }
-      dispatch({ type: 'SET_PROTOCOL', payload: data })
-      dispatch({ type: 'SET_STEP', payload: 'results' })
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let delivered = false
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+
+        // SSE frames are separated by a blank line.
+        const frames = buffer.split('\n\n')
+        buffer = frames.pop() || ''
+
+        for (const frame of frames) {
+          const eventMatch = frame.match(/^event: (.+)$/m)
+          const dataMatch = frame.match(/^data: (.+)$/m)
+          if (!eventMatch || !dataMatch) continue
+
+          let payload: any
+          try {
+            payload = JSON.parse(dataMatch[1])
+          } catch {
+            continue
+          }
+
+          if (eventMatch[1] === 'partial') {
+            dispatch({ type: 'SET_PARTIAL', payload })
+          } else if (eventMatch[1] === 'protocol') {
+            dispatch({ type: 'SET_PROTOCOL', payload })
+            dispatch({ type: 'SET_STEP', payload: 'results' })
+            delivered = true
+          } else if (eventMatch[1] === 'error') {
+            fail(payload.error || 'Failed to generate protocol')
+            return
+          }
+        }
+      }
+
+      if (!delivered) {
+        fail('The connection dropped before your protocol finished. Please try again.')
+      }
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Failed to generate protocol'
-      dispatch({ type: 'SET_ERROR', payload: msg })
-      dispatch({ type: 'SET_STEP', payload: 'review' })
+      fail(msg)
     }
   }
 
@@ -1066,27 +1141,113 @@ export default function ProtocolWizard() {
         )}
 
         {/* Step 9: Loading */}
-        {state.currentStep === 'loading' && (
-          <div className="animate-fade-in-up text-center py-16">
-            <h1 className="font-display text-4xl text-sage-900 mb-6">Generating Your Protocol</h1>
-            <p className="text-body text-gray-600 mb-12">Please wait while we analyze your data...</p>
+        {state.currentStep === 'loading' && (() => {
+          const stages = state.partial?.stages || []
+          const compounds = state.partial?.compounds || []
 
-            <div className="flex justify-center gap-2 mb-12">
-              <div className="w-3 h-3 bg-sage-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
-              <div className="w-3 h-3 bg-sage-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-              <div className="w-3 h-3 bg-sage-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-            </div>
+          // Each row reflects something the model has actually produced.
+          const STEPS: Array<{ label: string; done: boolean }> = [
+            { label: 'Reviewing your goals and profile', done: stages.length > 0 },
+            { label: 'Designing your protocol', done: stages.includes('overview') },
+            {
+              label: compounds.length > 0
+                ? `Selecting compounds (${compounds.length} so far)`
+                : 'Selecting compounds',
+              done: stages.includes('weeklySchedule'),
+            },
+            { label: 'Building your weekly schedule', done: stages.includes('cyclingProtocol') },
+            { label: 'Adding safety and monitoring notes', done: stages.includes('monitoring') },
+          ]
+          const activeIndex = STEPS.findIndex(st => !st.done)
 
-            <div className="max-w-md mx-auto space-y-3 text-left">
-              {['Analyzing your goals', 'Evaluating experience level', 'Selecting compounds', 'Building schedule', 'Compiling protocol'].map((step, idx) => (
-                <div key={step} className="flex items-center gap-3 text-gray-700">
-                  <CheckCircle className="w-5 h-5 text-sage-600" />
-                  <span>{step}</span>
+          const mins = Math.floor(elapsed / 60)
+          const secs = elapsed % 60
+          const clock = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`
+
+          return (
+            <div className="animate-fade-in-up py-12">
+              <div className="text-center mb-10">
+                <h1 className="font-display text-4xl text-sage-900 mb-3">
+                  {state.partial?.title || 'Building Your Protocol'}
+                </h1>
+                <p className="text-body text-gray-600">
+                  This usually takes one to two minutes — it&apos;s worth the wait.
+                </p>
+                <p className="text-sm text-gray-400 mt-2" aria-live="polite">
+                  {clock} elapsed
+                </p>
+              </div>
+
+              <div className="max-w-2xl mx-auto space-y-3 mb-10">
+                {STEPS.map((st, idx) => {
+                  const isActive = idx === activeIndex
+                  return (
+                    <div
+                      key={st.label}
+                      className={`flex items-center gap-3 transition-all duration-500 ${
+                        st.done ? 'text-sage-800' : isActive ? 'text-sage-700' : 'text-gray-300'
+                      }`}
+                    >
+                      {st.done ? (
+                        <CheckCircle className="w-5 h-5 text-sage-600 shrink-0" />
+                      ) : isActive ? (
+                        <span className="w-5 h-5 shrink-0 flex items-center justify-center">
+                          <span className="w-3 h-3 rounded-full bg-sage-500 animate-ping absolute" />
+                          <span className="w-3 h-3 rounded-full bg-sage-600" />
+                        </span>
+                      ) : (
+                        <span className="w-5 h-5 shrink-0 flex items-center justify-center">
+                          <span className="w-2.5 h-2.5 rounded-full border-2 border-gray-200" />
+                        </span>
+                      )}
+                      <span className={isActive ? 'font-medium' : ''}>{st.label}</span>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* The overview streams in as it's written — something real to read. */}
+              {state.partial?.overview && (
+                <div className="max-w-2xl mx-auto mb-8 animate-fade-in-up">
+                  <div className="bg-white rounded-2xl p-6 shadow-sm">
+                    <p className="text-body text-gray-700 leading-relaxed">
+                      {state.partial.overview}
+                      <span className="inline-block w-1.5 h-4 ml-0.5 bg-sage-400 align-middle animate-pulse" />
+                    </p>
+                  </div>
                 </div>
-              ))}
+              )}
+
+              {/* Compound cards appear one at a time as each is finalized. */}
+              {compounds.length > 0 && (
+                <div className="max-w-2xl mx-auto grid gap-3">
+                  {compounds.map((c, idx) => (
+                    <div
+                      key={`${c.name}-${idx}`}
+                      className="bg-white rounded-xl p-5 shadow-sm animate-fade-in-up"
+                    >
+                      <div className="flex items-start gap-3">
+                        <Beaker className="w-5 h-5 text-sage-600 shrink-0 mt-0.5" />
+                        <div className="min-w-0">
+                          <h3 className="font-medium text-sage-900">{c.name}</h3>
+                          {c.purpose && (
+                            <p className="text-sm text-gray-600 mt-1">{c.purpose}</p>
+                          )}
+                          {c.dose && (
+                            <p className="text-sm text-gray-500 mt-2">
+                              {c.dose}
+                              {c.frequency ? ` · ${c.frequency}` : ''}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          )
+        })()}
 
         {/* Step 10: Results */}
         {state.currentStep === 'results' && state.protocol && (

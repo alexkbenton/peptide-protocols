@@ -162,6 +162,113 @@ Professional, evidence-based, cautious about limitations. Avoid overpromising. B
 }
 
 /**
+ * Pull whatever is readable out of a partially-streamed JSON response.
+ * Tolerant by design: the buffer is almost always mid-token.
+ */
+function extractPartial(buf: string): {
+  title?: string
+  overview?: string
+  compounds: Array<Record<string, string>>
+  stages: string[]
+} {
+  const str = (key: string): string | undefined => {
+    // Match a complete "key": "value" pair, allowing escaped quotes.
+    const m = buf.match(new RegExp(`"${key}"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)"`))
+    if (!m) return undefined
+    try {
+      return JSON.parse(`"${m[1]}"`)
+    } catch {
+      return undefined
+    }
+  }
+
+  // Walk the compounds array and collect objects that have closed.
+  const compounds: Array<Record<string, string>> = []
+  const arrStart = buf.search(/"compounds"\s*:\s*\[/)
+  if (arrStart !== -1) {
+    let i = buf.indexOf('[', arrStart)
+    let depth = 0
+    let objStart = -1
+    let inStr = false
+    let esc = false
+    for (i = i + 1; i < buf.length; i++) {
+      const ch = buf[i]
+      if (esc) { esc = false; continue }
+      if (ch === '\\') { esc = true; continue }
+      if (ch === '"') { inStr = !inStr; continue }
+      if (inStr) continue
+      if (ch === '{') { if (depth === 0) objStart = i; depth++ }
+      else if (ch === '}') {
+        depth--
+        if (depth === 0 && objStart !== -1) {
+          try { compounds.push(JSON.parse(buf.slice(objStart, i + 1))) } catch { /* mid-write */ }
+          objStart = -1
+        }
+      } else if (ch === ']' && depth === 0) break
+    }
+  }
+
+  // Which named sections the model has started emitting — drives real progress.
+  const stages: string[] = []
+  if (str('title')) stages.push('title')
+  if (str('overview')) stages.push('overview')
+  if (compounds.length > 0) stages.push('compounds')
+  for (const key of ['weeklySchedule', 'cyclingProtocol', 'synergies', 'monitoring']) {
+    if (new RegExp(`"${key}"\\s*:`).test(buf)) stages.push(key)
+  }
+
+  return { title: str('title'), overview: str('overview'), compounds, stages }
+}
+
+/**
+ * Shape a validated protocol into what the wizard renders.
+ * Missing optional fields degrade to "section omitted", never an exception.
+ */
+function toFrontendProtocol(protocol: GeneratedProtocol) {
+  const html = (v: unknown): string =>
+    typeof v === 'string' && v.trim().length > 0 ? v.replace(/\n/g, '<br/>') : ''
+
+  const optionalSection = (heading: string, value: unknown) => {
+    const content = html(value)
+    return content ? [{ heading, content }] : []
+  }
+
+  const warnings = Array.isArray(protocol.importantWarnings) ? protocol.importantWarnings : []
+  const compounds = Array.isArray(protocol.compounds) ? protocol.compounds : []
+
+  return {
+    title: protocol.title,
+    summary: typeof protocol.overview === 'string' ? protocol.overview : '',
+    sections: [
+      ...(compounds.length > 0 ? [{
+        heading: 'Recommended Compounds',
+        content: '',
+        subsections: compounds.map(c => ({
+          title: `${c.name}${c.purpose ? ` — ${c.purpose}` : ''}`,
+          content: `<p><strong>Dose:</strong> ${c.dose} (${c.route})</p>
+<p><strong>Frequency:</strong> ${c.frequency} — ${c.timing}</p>
+<p><strong>Cycle:</strong> ${c.cycle}</p>
+<p><strong>Evidence Level:</strong> ${c.evidenceLevel}</p>
+${c.notes ? `<p><strong>Notes:</strong> ${c.notes}</p>` : ''}`
+        }))
+      }] : []),
+      ...optionalSection('Weekly Schedule', protocol.weeklySchedule),
+      ...optionalSection('Cycling Protocol', protocol.cyclingProtocol),
+      ...optionalSection('Synergies', protocol.synergies),
+      ...optionalSection('Monitoring', protocol.monitoring),
+      ...(warnings.length > 0 ? [{
+        heading: 'Important Warnings',
+        content: warnings.map(w => `<p>⚠️ ${w}</p>`).join('')
+      }] : []),
+    ],
+    disclaimer:
+      typeof protocol.disclaimer === 'string' && protocol.disclaimer.trim()
+        ? protocol.disclaimer
+        : 'This protocol is for educational purposes only and does not constitute medical advice. Consult a qualified healthcare provider before implementing any protocol.',
+  }
+}
+
+/**
  * POST handler for protocol generation
  */
 export async function POST(req: NextRequest) {
@@ -214,10 +321,7 @@ export async function POST(req: NextRequest) {
 
     const userMessage = userParts.join('\n')
 
-    // Call Claude API
-    // Streaming keeps the connection alive. A non-streaming call for a large
-    // comprehensive protocol was timing out at ~115s with no usable error.
-    const message = await client.messages.stream({
+    const requestParams = {
       // Model ID is configurable so a model retirement is a Vercel env change,
       // not a code change. claude-sonnet-4-20250514 was retired 2026-06-15.
       model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-5',
@@ -225,13 +329,107 @@ export async function POST(req: NextRequest) {
       // explicitly below, but the budget should rarely be the binding constraint.
       max_tokens: 16000,
       system: systemPrompt,
-      messages: [
-        {
-          role: 'user',
-          content: userMessage,
+      messages: [{ role: 'user' as const, content: userMessage }],
+    }
+
+    // ── Streaming path ────────────────────────────────────────────────
+    // Bytes must keep flowing: a silent 2-minute request was being dropped at
+    // ~113s. Streaming also lets the wizard show real progress instead of a
+    // spinner, which is the difference between waiting and abandoning.
+    if (body.stream) {
+      const encoder = new TextEncoder()
+
+      const readable = new ReadableStream({
+        async start(controller) {
+          let closed = false
+          const send = (event: string, data: unknown) => {
+            if (closed) return
+            controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`))
+          }
+
+          // Comment frames keep intermediaries from buffering or timing us out
+          // during the long stretch before the model emits anything useful.
+          const heartbeat = setInterval(() => {
+            if (!closed) controller.enqueue(encoder.encode(': keepalive\n\n'))
+          }, 5000)
+
+          try {
+            send('status', { stage: 'connected' })
+
+            const stream = client.messages.stream(requestParams)
+            let buf = ''
+            let lastSignature = ''
+
+            for await (const event of stream) {
+              if (
+                event.type === 'content_block_delta' &&
+                'delta' in event &&
+                event.delta.type === 'text_delta'
+              ) {
+                buf += event.delta.text
+
+                const partial = extractPartial(buf)
+                // Only push when something visible actually changed.
+                const signature = `${partial.title ?? ''}|${(partial.overview ?? '').length}|${partial.compounds.length}|${partial.stages.join(',')}`
+                if (signature !== lastSignature) {
+                  lastSignature = signature
+                  send('partial', partial)
+                }
+              }
+            }
+
+            const finalMessage = await stream.finalMessage()
+
+            if (finalMessage.stop_reason === 'max_tokens') {
+              console.error('Protocol generation hit max_tokens (stream)', {
+                goals: body.goals,
+                timeCommitment: body.timeCommitment,
+                outputTokens: finalMessage.usage?.output_tokens,
+              })
+              send('error', {
+                error:
+                  'That protocol was too large to finish generating. Try selecting fewer goals, or a lighter time commitment.',
+              })
+              return
+            }
+
+            const jsonMatch = buf.match(/\{[\s\S]*\}/)
+            if (!jsonMatch) throw new Error('No JSON found in streamed response')
+
+            const parsed: GeneratedProtocol = JSON.parse(jsonMatch[0])
+            if (!parsed.title || !Array.isArray(parsed.compounds)) {
+              throw new Error('Invalid protocol structure')
+            }
+
+            send('protocol', toFrontendProtocol(parsed))
+          } catch (err) {
+            console.error('Protocol generation error (stream):', err)
+            send('error', {
+              error: 'We could not generate your protocol right now. Please try again in a moment.',
+            })
+          } finally {
+            clearInterval(heartbeat)
+            closed = true
+            controller.close()
+          }
         },
-      ],
-    }).finalMessage()
+      })
+
+      return new Response(readable, {
+        headers: {
+          'Content-Type': 'text/event-stream; charset=utf-8',
+          'Cache-Control': 'no-cache, no-transform',
+          Connection: 'keep-alive',
+          // Stops proxies from buffering the stream into one lump at the end.
+          'X-Accel-Buffering': 'no',
+        },
+      })
+    }
+
+    // Call Claude API
+    // Streaming keeps the connection alive. A non-streaming call for a large
+    // comprehensive protocol was timing out at ~115s with no usable error.
+    const message = await client.messages.stream(requestParams).finalMessage()
 
     // Extract content
     const responseContent = message.content[0]
@@ -284,49 +482,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // The model occasionally omits an optional section. Missing fields must
-    // degrade to "section not shown", never take down the whole request.
-    const html = (v: unknown): string =>
-      typeof v === 'string' && v.trim().length > 0 ? v.replace(/\n/g, '<br/>') : ''
-
-    const optionalSection = (heading: string, value: unknown) => {
-      const content = html(value)
-      return content ? [{ heading, content }] : []
-    }
-
-    const warnings = Array.isArray(protocol.importantWarnings) ? protocol.importantWarnings : []
-
-    // Transform into the format the frontend expects
-    const frontendProtocol = {
-      title: protocol.title,
-      summary: typeof protocol.overview === 'string' ? protocol.overview : '',
-      sections: [
-        ...(protocol.compounds.length > 0 ? [{
-          heading: 'Recommended Compounds',
-          content: '',
-          subsections: protocol.compounds.map(c => ({
-            title: `${c.name} — ${c.purpose}`,
-            content: `<p><strong>Dose:</strong> ${c.dose} (${c.route})</p>
-<p><strong>Frequency:</strong> ${c.frequency} — ${c.timing}</p>
-<p><strong>Cycle:</strong> ${c.cycle}</p>
-<p><strong>Evidence Level:</strong> ${c.evidenceLevel}</p>
-${c.notes ? `<p><strong>Notes:</strong> ${c.notes}</p>` : ''}`
-          }))
-        }] : []),
-        ...optionalSection('Weekly Schedule', protocol.weeklySchedule),
-        ...optionalSection('Cycling Protocol', protocol.cyclingProtocol),
-        ...optionalSection('Synergies', protocol.synergies),
-        ...optionalSection('Monitoring', protocol.monitoring),
-        ...(warnings.length > 0 ? [{
-          heading: 'Important Warnings',
-          content: warnings.map(w => `<p>⚠️ ${w}</p>`).join('')
-        }] : []),
-      ],
-      disclaimer:
-        typeof protocol.disclaimer === 'string' && protocol.disclaimer.trim()
-          ? protocol.disclaimer
-          : 'This protocol is for educational purposes only and does not constitute medical advice. Consult a qualified healthcare provider before implementing any protocol.',
-    }
+    const frontendProtocol = toFrontendProtocol(protocol)
 
     return NextResponse.json(frontendProtocol, { status: 200 })
   } catch (error) {
