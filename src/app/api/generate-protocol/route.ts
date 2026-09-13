@@ -213,8 +213,10 @@ export async function POST(req: NextRequest) {
 
     // Call Claude API
     const message = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 4000,
+      // Model ID is configurable so a model retirement is a Vercel env change,
+      // not a code change. claude-sonnet-4-20250514 was retired 2026-06-15.
+      model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-5',
+      max_tokens: 8000,
       system: systemPrompt,
       messages: [
         {
@@ -291,14 +293,13 @@ ${c.notes ? `<p><strong>Notes:</strong> ${c.notes}</p>` : ''}`
   } catch (error) {
     console.error('Protocol generation error:', error)
 
+    // Never surface raw upstream API errors to the browser — they leak model IDs,
+    // request ids and internal detail. Log the detail, return something readable.
     if (error instanceof Error) {
-      if (error.message.includes('API') || error.message.includes('authentication')) {
-        return NextResponse.json(
-          { error: 'API error. Please try again in a moment.' },
-          { status: 503 },
-        )
-      }
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json(
+        { error: 'We could not generate your protocol right now. Please try again in a moment.' },
+        { status: 503 },
+      )
     }
 
     return NextResponse.json(

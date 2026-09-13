@@ -87,6 +87,15 @@ public/
 3. Import and add to `contentMap` in `src/app/protocols/[slug]/page.tsx`
 4. Push to deploy
 
+### Protocol Generation (/personalize — "My Protocol")
+- `ProtocolWizard.tsx` collects goals/profile, POSTs to `/api/generate-protocol`
+- That route builds a system prompt from the compiled knowledge base and calls the
+  Anthropic Messages API, then reshapes the JSON into the wizard's section format
+- **Model ID is pinned via `ANTHROPIC_MODEL`** (default `claude-sonnet-5`). Anthropic
+  retires dated model snapshots — `claude-sonnet-4-20250514` was retired 2026-06-15 and
+  silently broke this page. If the wizard starts erroring, check the model ID first:
+  https://platform.claude.com/docs/en/about-claude/model-deprecations
+
 ### Videos
 - Video data in `src/data/videos.ts` — update `vimeoId` with real Vimeo video IDs
 - Videos render as embedded Vimeo iframes in a responsive grid
@@ -99,6 +108,8 @@ public/
 ## Environment Variables (Vercel)
 These need to be set in Vercel → Settings → Environment Variables:
 ```
+ANTHROPIC_API_KEY=sk-ant-...     # REQUIRED — powers the /personalize protocol wizard
+ANTHROPIC_MODEL=claude-sonnet-5  # optional; override if the default model is retired
 KLAVIYO_PRIVATE_API_KEY=pk_...   # scopes: subscriptions:write, profiles:write, lists:write
 KLAVIYO_LIST_ID=abc123           # optional; omit to use account default opt-in settings
 KLAVIYO_API_REVISION=2026-07-15  # optional; defaults to 2026-07-15
