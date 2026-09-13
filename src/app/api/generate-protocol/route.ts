@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { getKnowledgeBase, getCompoundsByGoals, getKnowledgeBaseForContext } from '@/lib/knowledge-base'
 
+// Comprehensive protocols (many goals, large stacks) can take 80s+ to generate.
+// Without this, Vercel cuts the function off at its short default.
+export const maxDuration = 300
+
 /**
  * Generated protocol response — used by generate-pdf
  */
@@ -216,7 +220,9 @@ export async function POST(req: NextRequest) {
       // Model ID is configurable so a model retirement is a Vercel env change,
       // not a code change. claude-sonnet-4-20250514 was retired 2026-06-15.
       model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-5',
-      max_tokens: 8000,
+      // Comprehensive stacks (5+ goals) need real room; truncation is handled
+      // explicitly below, but the budget should rarely be the binding constraint.
+      max_tokens: 16000,
       system: systemPrompt,
       messages: [
         {
@@ -230,6 +236,23 @@ export async function POST(req: NextRequest) {
     const responseContent = message.content[0]
     if (responseContent.type !== 'text') {
       throw new Error('Unexpected response type from Claude')
+    }
+
+    // A truncated response yields malformed JSON further down, which is a
+    // confusing way to discover you simply ran out of output budget.
+    if (message.stop_reason === 'max_tokens') {
+      console.error('Protocol generation hit max_tokens', {
+        goals: body.goals,
+        timeCommitment: body.timeCommitment,
+        outputTokens: message.usage?.output_tokens,
+      })
+      return NextResponse.json(
+        {
+          error:
+            'That protocol was too large to finish generating. Try selecting fewer goals, or a lighter time commitment.',
+        },
+        { status: 502 },
+      )
     }
 
     // Parse JSON response
@@ -260,10 +283,22 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // The model occasionally omits an optional section. Missing fields must
+    // degrade to "section not shown", never take down the whole request.
+    const html = (v: unknown): string =>
+      typeof v === 'string' && v.trim().length > 0 ? v.replace(/\n/g, '<br/>') : ''
+
+    const optionalSection = (heading: string, value: unknown) => {
+      const content = html(value)
+      return content ? [{ heading, content }] : []
+    }
+
+    const warnings = Array.isArray(protocol.importantWarnings) ? protocol.importantWarnings : []
+
     // Transform into the format the frontend expects
     const frontendProtocol = {
       title: protocol.title,
-      summary: protocol.overview,
+      summary: typeof protocol.overview === 'string' ? protocol.overview : '',
       sections: [
         ...(protocol.compounds.length > 0 ? [{
           heading: 'Recommended Compounds',
@@ -277,16 +312,19 @@ export async function POST(req: NextRequest) {
 ${c.notes ? `<p><strong>Notes:</strong> ${c.notes}</p>` : ''}`
           }))
         }] : []),
-        { heading: 'Weekly Schedule', content: protocol.weeklySchedule.replace(/\n/g, '<br/>') },
-        { heading: 'Cycling Protocol', content: protocol.cyclingProtocol.replace(/\n/g, '<br/>') },
-        { heading: 'Synergies', content: protocol.synergies.replace(/\n/g, '<br/>') },
-        { heading: 'Monitoring', content: protocol.monitoring.replace(/\n/g, '<br/>') },
-        ...(protocol.importantWarnings.length > 0 ? [{
+        ...optionalSection('Weekly Schedule', protocol.weeklySchedule),
+        ...optionalSection('Cycling Protocol', protocol.cyclingProtocol),
+        ...optionalSection('Synergies', protocol.synergies),
+        ...optionalSection('Monitoring', protocol.monitoring),
+        ...(warnings.length > 0 ? [{
           heading: 'Important Warnings',
-          content: protocol.importantWarnings.map(w => `<p>⚠️ ${w}</p>`).join('')
+          content: warnings.map(w => `<p>⚠️ ${w}</p>`).join('')
         }] : []),
       ],
-      disclaimer: protocol.disclaimer,
+      disclaimer:
+        typeof protocol.disclaimer === 'string' && protocol.disclaimer.trim()
+          ? protocol.disclaimer
+          : 'This protocol is for educational purposes only and does not constitute medical advice. Consult a qualified healthcare provider before implementing any protocol.',
     }
 
     return NextResponse.json(frontendProtocol, { status: 200 })
@@ -294,10 +332,21 @@ ${c.notes ? `<p><strong>Notes:</strong> ${c.notes}</p>` : ''}`
     console.error('Protocol generation error:', error)
 
     // Never surface raw upstream API errors to the browser — they leak model IDs,
-    // request ids and internal detail. Log the detail, return something readable.
+    // request ids and internal detail. Log the detail, return something readable
+    // plus a coarse code so failures can be told apart without reading logs.
     if (error instanceof Error) {
+      const status = (error as unknown as { status?: unknown }).status
+      const code =
+        typeof status === 'number'
+          ? `upstream_${status}`
+          : error.name === 'TypeError'
+            ? 'malformed_protocol'
+            : 'unknown'
       return NextResponse.json(
-        { error: 'We could not generate your protocol right now. Please try again in a moment.' },
+        {
+          error: 'We could not generate your protocol right now. Please try again in a moment.',
+          code,
+        },
         { status: 503 },
       )
     }
